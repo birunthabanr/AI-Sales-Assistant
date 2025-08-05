@@ -1,1 +1,10 @@
 Data/output/
+*.bin
+checkpoint-*/
+runs/
+output/
+*.h5
+*.ckpt
+
+notebooks/DSTC8/mlruns/
+notebooks/DSTC8/results/
