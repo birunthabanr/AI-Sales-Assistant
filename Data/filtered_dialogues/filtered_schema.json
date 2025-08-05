@@ -1,0 +1,546 @@
+[
+  {
+    "service_name": "Events_1",
+    "description": "The comprehensive portal to find and reserve seats at events near you",
+    "slots": [
+      {
+        "name": "category",
+        "description": "Type of event",
+        "is_categorical": true,
+        "possible_values": [
+          "Music",
+          "Sports"
+        ]
+      },
+      {
+        "name": "subcategory",
+        "description": "Subcategory of event, either a music genre or sport name",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "event_name",
+        "description": "Name of event",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "date",
+        "description": "Date of occurrence of event",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "time",
+        "description": "Time when the event is scheduled to start",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "number_of_seats",
+        "description": "Number of seats to find event tickets for",
+        "is_categorical": true,
+        "possible_values": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ]
+      },
+      {
+        "name": "city_of_event",
+        "description": "City where event is happening",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "event_location",
+        "description": "Name of event location",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "address_of_location",
+        "description": "Street address of event location",
+        "is_categorical": false,
+        "possible_values": []
+      }
+    ],
+    "intents": [
+      {
+        "name": "FindEvents",
+        "description": "Find events in a given city",
+        "is_transactional": false,
+        "required_slots": [
+          "category",
+          "city_of_event"
+        ],
+        "optional_slots": {
+          "date": "dontcare",
+          "subcategory": "dontcare"
+        },
+        "result_slots": [
+          "category",
+          "subcategory",
+          "event_name",
+          "date",
+          "time",
+          "city_of_event",
+          "event_location",
+          "address_of_location"
+        ]
+      },
+      {
+        "name": "BuyEventTickets",
+        "description": "Buy tickets for an event",
+        "is_transactional": true,
+        "required_slots": [
+          "event_name",
+          "number_of_seats",
+          "date",
+          "city_of_event"
+        ],
+        "optional_slots": {},
+        "result_slots": [
+          "event_name",
+          "date",
+          "time",
+          "number_of_seats",
+          "city_of_event",
+          "event_location",
+          "address_of_location"
+        ]
+      }
+    ]
+  },
+  {
+    "service_name": "Events_2",
+    "description": "Get tickets for the coolest concerts and sports in your area",
+    "slots": [
+      {
+        "name": "event_type",
+        "description": "Type of event",
+        "is_categorical": true,
+        "possible_values": [
+          "Music",
+          "Sports"
+        ]
+      },
+      {
+        "name": "category",
+        "description": "The sport or music subcategory",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "event_name",
+        "description": "Name of match or artist for event",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "date",
+        "description": "Date of event",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "time",
+        "description": "Starting time for event",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "number_of_tickets",
+        "description": "Number of tickets to buy for event",
+        "is_categorical": true,
+        "possible_values": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ]
+      },
+      {
+        "name": "city",
+        "description": "City where the event is taking place",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "venue",
+        "description": "Exact venue of event",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "venue_address",
+        "description": "Address of event venue",
+        "is_categorical": false,
+        "possible_values": []
+      }
+    ],
+    "intents": [
+      {
+        "name": "FindEvents",
+        "description": "Find concerts and games happening in your area",
+        "is_transactional": false,
+        "required_slots": [
+          "event_type",
+          "city"
+        ],
+        "optional_slots": {
+          "date": "dontcare",
+          "category": "dontcare"
+        },
+        "result_slots": [
+          "event_type",
+          "category",
+          "event_name",
+          "date",
+          "time",
+          "city",
+          "venue",
+          "venue_address"
+        ]
+      },
+      {
+        "name": "GetEventDates",
+        "description": "Get dates on which a given event is taking place",
+        "is_transactional": false,
+        "required_slots": [
+          "event_name",
+          "city"
+        ],
+        "optional_slots": {},
+        "result_slots": [
+          "event_name",
+          "date",
+          "time",
+          "city",
+          "venue",
+          "venue_address"
+        ]
+      },
+      {
+        "name": "BuyEventTickets",
+        "description": "Buy tickets for an event",
+        "is_transactional": true,
+        "required_slots": [
+          "event_name",
+          "number_of_tickets",
+          "date",
+          "city"
+        ],
+        "optional_slots": {},
+        "result_slots": [
+          "event_name",
+          "date",
+          "time",
+          "number_of_tickets",
+          "city",
+          "venue",
+          "venue_address"
+        ]
+      }
+    ]
+  },
+  {
+    "service_name": "Services_1",
+    "description": "A widely used service for finding and reserving the hair stylist of your choice",
+    "slots": [
+      {
+        "name": "stylist_name",
+        "description": "Name of the hair stylist/salon",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "phone_number",
+        "description": "Phone number of the stylist/salon",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "average_rating",
+        "description": "Average review rating for the stylist/salon",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "is_unisex",
+        "description": "Boolean flag indicating if the salon is unisex",
+        "is_categorical": true,
+        "possible_values": [
+          "True",
+          "False"
+        ]
+      },
+      {
+        "name": "street_address",
+        "description": "Address of the stylist/salon",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "city",
+        "description": "City where the salon is located",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "appointment_date",
+        "description": "Date for the appointment",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "appointment_time",
+        "description": "Time of the appointment",
+        "is_categorical": false,
+        "possible_values": []
+      }
+    ],
+    "intents": [
+      {
+        "name": "BookAppointment",
+        "description": "Book an appointment at a hair stylist",
+        "is_transactional": true,
+        "required_slots": [
+          "stylist_name",
+          "appointment_time",
+          "appointment_date"
+        ],
+        "optional_slots": {},
+        "result_slots": [
+          "stylist_name",
+          "phone_number",
+          "average_rating",
+          "is_unisex",
+          "street_address",
+          "appointment_date",
+          "appointment_time"
+        ]
+      },
+      {
+        "name": "FindProvider",
+        "description": "Search for a hair stylist by city and optionally other attributes",
+        "is_transactional": false,
+        "required_slots": [
+          "city"
+        ],
+        "optional_slots": {
+          "is_unisex": "dontcare"
+        },
+        "result_slots": [
+          "stylist_name",
+          "phone_number",
+          "average_rating",
+          "is_unisex",
+          "street_address",
+          "city"
+        ]
+      }
+    ]
+  },
+  {
+    "service_name": "Services_2",
+    "description": "The go-to service for finding and booking appointments with top rated dentists",
+    "slots": [
+      {
+        "name": "dentist_name",
+        "description": "Name of the dentist",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "phone_number",
+        "description": "Phone number of the dentist",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "address",
+        "description": "Address of the dentist",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "city",
+        "description": "City where the dentist is located",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "appointment_date",
+        "description": "Date for the appointment",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "appointment_time",
+        "description": "Time for the appointment",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "offers_cosmetic_services",
+        "description": "Boolean flag indicating if the dentist offers cosmetic services",
+        "is_categorical": true,
+        "possible_values": [
+          "True",
+          "False"
+        ]
+      }
+    ],
+    "intents": [
+      {
+        "name": "BookAppointment",
+        "description": "Book an appointment at a dentist for a given time and date",
+        "is_transactional": true,
+        "required_slots": [
+          "dentist_name",
+          "appointment_time",
+          "appointment_date"
+        ],
+        "optional_slots": {},
+        "result_slots": [
+          "dentist_name",
+          "phone_number",
+          "address",
+          "appointment_date",
+          "appointment_time",
+          "offers_cosmetic_services"
+        ]
+      },
+      {
+        "name": "FindProvider",
+        "description": "Find a dentist by location and optionally by services offered",
+        "is_transactional": false,
+        "required_slots": [
+          "city"
+        ],
+        "optional_slots": {
+          "offers_cosmetic_services": "dontcare"
+        },
+        "result_slots": [
+          "dentist_name",
+          "phone_number",
+          "address",
+          "city",
+          "offers_cosmetic_services"
+        ]
+      }
+    ]
+  },
+  {
+    "service_name": "Services_3",
+    "description": "A popular provider for finding the right doctor for your needs. Also allows you to schedule your visit to the doctor",
+    "slots": [
+      {
+        "name": "doctor_name",
+        "description": "Name of the doctor or the medical practice",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "phone_number",
+        "description": "Contact number for the doctor or the medical practice",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "average_rating",
+        "description": "Average review rating of the doctor",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "street_address",
+        "description": "Address of the doctor",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "city",
+        "description": "City where the doctor is located",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "appointment_date",
+        "description": "Date for scheduling the appointment with the doctor",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "appointment_time",
+        "description": "Time for the appointment with the doctor",
+        "is_categorical": false,
+        "possible_values": []
+      },
+      {
+        "name": "type",
+        "description": "Speciality of the doctor",
+        "is_categorical": true,
+        "possible_values": [
+          "Gynecologist",
+          "ENT Specialist",
+          "Ophthalmologist",
+          "General Practitioner",
+          "Dermatologist"
+        ]
+      }
+    ],
+    "intents": [
+      {
+        "name": "BookAppointment",
+        "description": "Book an appointment with a specific doctor for the given date and time",
+        "is_transactional": true,
+        "required_slots": [
+          "doctor_name",
+          "appointment_time",
+          "appointment_date"
+        ],
+        "optional_slots": {},
+        "result_slots": [
+          "doctor_name",
+          "phone_number",
+          "average_rating",
+          "street_address",
+          "appointment_date",
+          "appointment_time",
+          "type"
+        ]
+      },
+      {
+        "name": "FindProvider",
+        "description": "Find a medical service provider based on their location and speciality",
+        "is_transactional": false,
+        "required_slots": [
+          "city",
+          "type"
+        ],
+        "optional_slots": {},
+        "result_slots": [
+          "doctor_name",
+          "phone_number",
+          "average_rating",
+          "street_address",
+          "city",
+          "type"
+        ]
+      }
+    ]
+  }
+]
