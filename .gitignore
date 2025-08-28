@@ -10,7 +10,7 @@ notebooks/DSTC8/mlruns/
 notebooks/DSTC8/results/
 Data/filtered_dialogues.json
 Data/filtered_dialogues.json
-
+.env
 Frontend/node_modules/
 
 # Ignore fine-tuned model folder
