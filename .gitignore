@@ -12,3 +12,10 @@ Data/filtered_dialogues.json
 Frontend/node_modules/
 
 .DS_Store
+Data/filtered_dialogues.json
+.env
+Frontend/node_modules/
+
+# Ignore fine-tuned model folder
+Intent Classifier/distilbert-dstc8-intent/
+Intent Classifier/label_encoder.pkl

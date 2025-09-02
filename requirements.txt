@@ -12,3 +12,11 @@ datasets
 bitsandbytes
 peft==0.4.0
 accelerate
+huggingface_hub
+google.generativeai
+fastapi
+uvicorn
+httpx
+asyncpg
+pydantic
+python-dotenv
