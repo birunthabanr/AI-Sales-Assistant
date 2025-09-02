@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import React, { useEffect } from 'react';
+import supabase from "../config/supabaseClient.js"
 
 interface Message {
   id: number;
@@ -14,26 +16,39 @@ interface Message {
 }
 
 const Chat = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      text: "Hello! How can I help you today?",
-      sender: "bot",
-      timestamp: new Date(Date.now() - 3600000),
-    },
-    {
-      id: 2,
-      text: "Hi there! I have a question about my account.",
-      sender: "user",
-      timestamp: new Date(Date.now() - 3500000),
-    },
-    {
-      id: 3,
-      text: "I'd be happy to help you with your account. What specific question do you have?",
-      sender: "bot",
-      timestamp: new Date(Date.now() - 3400000),
-    },
-  ]);
+
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    const fetchChat = async () => {
+      const clientId = "f9035a5d-b169-4de0-8ed6-b4cfd77d1484";
+
+      const { data, error } = await supabase
+        .from("client")
+        .select("client_chat") // only select the chat array
+        .eq("client_id", clientId)
+        .single(); // get one row
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      if (data) {
+        // Convert timestamp strings to Date objects
+        const chatWithDate = data.client_chat.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp),
+        }));
+
+        setMessages(chatWithDate); // set the chat array
+        console.log("Client Chat:", chatWithDate);
+      }
+    };
+
+    fetchChat();
+  }, []);
+
   const [newMessage, setNewMessage] = useState("");
 
   const sendMessage = () => {
@@ -47,6 +62,8 @@ const Chat = () => {
       
       setMessages(prev => [...prev, userMessage]);
       setNewMessage("");
+
+      // chat with llm and get response
       
       // Simulate bot response
       setTimeout(() => {
@@ -73,7 +90,7 @@ const Chat = () => {
       <div className="max-w-4xl mx-auto p-4">
         <Card className="h-[calc(100vh-8rem)]">
           <CardHeader>
-            <CardTitle>Chat Support</CardTitle>
+            <CardTitle>Hello!  How can i assist you </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col h-full">
             <ScrollArea className="flex-1 mb-4 pr-4">
