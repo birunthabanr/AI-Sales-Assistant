@@ -2,9 +2,13 @@ from flask import Flask, request, jsonify
 from supabase import create_client
 import os
 import requests
-from dotenv import load_dotenv
+from dotenv import load_dotenv 
+from mcp_clients.llm import handle_prompt
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 load_dotenv()
 
 # Load Supabase credentials
@@ -55,8 +59,22 @@ def create_booking():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-
-
+@app.route('/chat',methods =['POST'])
+def chat_response():
+    print("try to get response")
+    try:
+        print("try block")
+        data = request.get_json()
+        print("this is a data")
+        user_prompt = data.get("prompt")
+        print(user_prompt)
+        if not user_prompt:
+            return jsonify({"error": "Missing 'prompt'"}), 400
+        result = handle_prompt(user_prompt)
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 # ROUTE 3: Query via LLM (Ollama)
 @app.route('/query', methods=['POST'])
 def query_llm():
@@ -100,4 +118,4 @@ def query_llm():
 
 # Start Flask server
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=3000)
+    app.run(host="0.0.0.0", port=5000)
