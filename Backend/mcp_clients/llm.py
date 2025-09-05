@@ -2,11 +2,10 @@ import requests
 import json
 import re
 
-
 # Config
-MCP_SERVER_URL = "http://localhost:3000"   # Flask MCP server
+MCP_SERVER_URL = "http://localhost:3000"   # FastAPI MCP server
 OLLAMA_API = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "llama3"  
+OLLAMA_MODEL = "llama3"
 
 
 # Extract JSON from text
@@ -38,8 +37,7 @@ Respond ONLY in JSON with this format:
     "room_no": int,
     "start_date": "YYYY-MM-DD",
     "end_date": "YYYY-MM-DD",
-    "num_people": int,
-    "price": float
+    "num_people": int
   }}
 }}
 
@@ -75,9 +73,17 @@ Rules:
             raw = "".join(chunks).strip()
             print("RAW RESPONSE:", raw)
 
-    except Exception as e:
-        print("❌ Ollama call failed:", e)
-        return {"action": "chat", "args": {"response": f"Ollama error: {e}"}}
+
+    with requests.post(OLLAMA_API, json={
+        "model": OLLAMA_MODEL,
+        "prompt": system_prompt,
+        "stream": True
+    }, stream=True) as resp:
+# =======
+#     except Exception as e:
+#         print("❌ Ollama call failed:", e)
+#         return {"action": "chat", "args": {"response": f"Ollama error: {e}"}}
+# >>>>>>> main
 
     # Try parsing accumulated response
     parsed = extract_json(raw)
@@ -127,61 +133,21 @@ def handle_prompt(user_prompt: str):
             except json.JSONDecodeError:
                 continue
 
-        reply = "".join(reply_chunks).strip()
-        return {"action": "chat", "result": reply}
+
+        raw = "".join(chunks).strip()
+
+    parsed = extract_json(raw)
+    if not parsed:
+        parsed = {"action": "chat", "args": {"response": raw}}
+
+    return parsed
+# =======
+#         reply = "".join(reply_chunks).strip()
+#         return {"action": "chat", "result": reply}
+# >>>>>>> main
 
 
 # Main loop
-# def run_client():
-#     print("Welcome to Hotel Assistant 🏨 (type 'quit' to exit)")
-#     while True:
-#         user_prompt = input("\nYou: ")
-#         if user_prompt.lower() in ["quit", "exit"]:
-#             break
-
-#         intent = query_llm_for_intent(user_prompt)
-#         action = intent.get("action", "chat")
-#         args = intent.get("args", {})
-
-#         # Handle actions
-#         if action == "get_customers":
-#             res = requests.get(f"{MCP_SERVER_URL}/customers")
-#             print("👉 Customers:", res.json())
-
-#         elif action == "create_booking":
-#             # fallback defaults if args are incomplete
-#             booking_data = {
-#                 "customer_id": args.get("customer_id", 1),
-#                 "room_no": args.get("room_no", 101),
-#                 "start_date": args.get("start_date", "2025-09-10"),
-#                 "end_date": args.get("end_date", "2025-09-12"),
-#                 "num_people": args.get("num_people", 2),
-#                 "price": args.get("price", 500)
-#             }
-#             res = requests.post(f"{MCP_SERVER_URL}/bookings", json=booking_data)
-#             print("👉 Booking Result:", res.json())
-
-#         else:  # Just chat normally with LLM
-#             chat_resp = requests.post(OLLAMA_API, json={
-#                 "model": OLLAMA_MODEL,
-#                 "prompt": user_prompt,
-#                 "stream": True
-#             }, stream=True)
-
-#             reply_chunks = []
-#             for line in chat_resp.iter_lines():
-#                 if not line:
-#                     continue
-#                 try:
-#                     data = json.loads(line.decode("utf-8"))
-#                     if "response" in data:
-#                         reply_chunks.append(data["response"])
-#                 except json.JSONDecodeError:
-#                     continue
-
-#             reply = "".join(reply_chunks).strip()
-#             print(f"LLM: {reply}")
-
 def run_client():
     print("Welcome to Hotel Assistant 🏨 (type 'quit' to exit)")
     while True:
@@ -190,5 +156,76 @@ def run_client():
             break
 
 
-# if __name__ == "__main__":
-#     run_client()
+        intent = query_llm_for_intent(user_prompt)
+        action = intent.get("action", "chat")
+        args = intent.get("args", {})
+
+        # Handle actions
+        if action == "get_customers":
+            try:
+                res = requests.get(f"{MCP_SERVER_URL}/customers")
+                res.raise_for_status()
+                print("👉 Customers:", res.json())
+            except Exception as e:
+                print("❌ Error fetching customers:", str(e))
+
+        elif action == "create_booking":
+            required_fields = ["customer_id", "room_no", "start_date", "end_date", "num_people"]
+            missing_fields = [field for field in required_fields if args.get(field) is None]
+
+            # Prompt user for missing fields
+            for field in missing_fields:
+                value = input(f"Please enter {field.replace('_', ' ')}: ")
+                if field in ["customer_id", "room_no", "num_people"]:
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        print(f"Invalid input for {field}, using default 1.")
+                        value = 1
+                args[field] = value
+
+            booking_data = {
+                "customer_id": args["customer_id"],
+                "room_no": args["room_no"],
+                "start_date": args["start_date"],
+                "end_date": args["end_date"],
+                "num_people": args["num_people"]
+            }
+
+            try:
+                res = requests.post(f"{MCP_SERVER_URL}/bookings", json=booking_data)
+                res.raise_for_status()
+                print("👉 Booking Result:", res.json())
+            except Exception as e:
+                print("❌ Error creating booking:", str(e))
+
+        else:  # Just chat normally with LLM
+            assistant_prompt = f"""
+You are a helpful hotel assistant. Answer the user's question or help with hotel-related tasks.
+
+User: {user_prompt}
+"""
+            chat_resp = requests.post(OLLAMA_API, json={
+                "model": OLLAMA_MODEL,
+                "prompt": assistant_prompt,
+                "stream": True
+            }, stream=True)
+
+            reply_chunks = []
+            for line in chat_resp.iter_lines():
+                if not line:
+                    continue
+                try:
+                    data = json.loads(line.decode("utf-8"))
+                    if "response" in data:
+                        reply_chunks.append(data["response"])
+                except json.JSONDecodeError:
+                    continue
+
+            reply = "".join(reply_chunks).strip()
+            print(f"LLM: {reply}")
+
+
+
+if __name__ == "__main__":
+    run_client()
