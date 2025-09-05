@@ -10,6 +10,7 @@ OLLAMA_MODEL = "llama3"
 
 # Extract JSON from text
 def extract_json(text: str):
+    print("this is extract_json")
     """Try to extract the first {...} JSON object from text."""
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if match:
@@ -22,10 +23,7 @@ def extract_json(text: str):
 
 # Ask LLM for intent
 def query_llm_for_intent(user_prompt: str):
-    """
-    Send the user prompt to Ollama and force it to return structured JSON
-    indicating which action to take. Handles streaming JSON lines.
-    """
+    print("this is query_llm_intent()")
     system_prompt = f"""
 You are an intent parser for a hotel booking assistant.
 
@@ -49,24 +47,92 @@ Rules:
 - Otherwise, use "chat".
 - Always return valid JSON. Do not add extra text.
 """
+    try:
+        with requests.post(
+            OLLAMA_API,
+            json={"model": OLLAMA_MODEL, "prompt": system_prompt, "stream": True},
+            stream=True,
+            timeout=30
+        ) as resp:
+            resp.raise_for_status()
+
+            chunks = []
+            for line in resp.iter_lines():
+                if not line:
+                    continue
+                decoded = line.decode("utf-8")
+                print("OLLAMA STREAM:", decoded)  # 👈 debug output
+                try:
+                    data = json.loads(decoded)
+                    if "response" in data:
+                        chunks.append(data["response"])
+                except json.JSONDecodeError:
+                    print("⚠️ Could not parse line:", decoded)
+                    continue
+
+            raw = "".join(chunks).strip()
+            print("RAW RESPONSE:", raw)
+
 
     with requests.post(OLLAMA_API, json={
         "model": OLLAMA_MODEL,
         "prompt": system_prompt,
         "stream": True
     }, stream=True) as resp:
+# =======
+#     except Exception as e:
+#         print("❌ Ollama call failed:", e)
+#         return {"action": "chat", "args": {"response": f"Ollama error: {e}"}}
+# >>>>>>> main
 
-        resp.raise_for_status()
-        chunks = []
-        for line in resp.iter_lines():
+    # Try parsing accumulated response
+    parsed = extract_json(raw)
+    if not parsed:
+        parsed = {"action": "chat", "args": {"response": raw}}
+
+    return parsed
+
+def handle_prompt(user_prompt: str):
+    print("this is handle_prompt()")
+    """Process a single user prompt and return structured response."""
+    intent = query_llm_for_intent(user_prompt)
+    action = intent.get("action", "chat")
+    args = intent.get("args", {})
+
+    if action == "get_customers":
+        res = requests.get(f"{MCP_SERVER_URL}/customers")
+        return {"action": "get_customers", "result": res.json()}
+
+    elif action == "create_booking":
+        booking_data = {
+            "customer_id": args.get("customer_id", 1),
+            "room_no": args.get("room_no", 101),
+            "start_date": args.get("start_date", "2025-09-10"),
+            "end_date": args.get("end_date", "2025-09-12"),
+            "num_people": args.get("num_people", 2),
+            "price": args.get("price", 500)
+        }
+        res = requests.post(f"{MCP_SERVER_URL}/bookings", json=booking_data)
+        return {"action": "create_booking", "result": res.json()}
+
+    else:
+        chat_resp = requests.post(OLLAMA_API, json={
+            "model": OLLAMA_MODEL,
+            "prompt": user_prompt,
+            "stream": True
+        }, stream=True)
+
+        reply_chunks = []
+        for line in chat_resp.iter_lines():
             if not line:
                 continue
             try:
                 data = json.loads(line.decode("utf-8"))
                 if "response" in data:
-                    chunks.append(data["response"])
+                    reply_chunks.append(data["response"])
             except json.JSONDecodeError:
                 continue
+
 
         raw = "".join(chunks).strip()
 
@@ -75,15 +141,20 @@ Rules:
         parsed = {"action": "chat", "args": {"response": raw}}
 
     return parsed
+# =======
+#         reply = "".join(reply_chunks).strip()
+#         return {"action": "chat", "result": reply}
+# >>>>>>> main
 
 
 # Main loop
 def run_client():
     print("Welcome to Hotel Assistant 🏨 (type 'quit' to exit)")
     while True:
-        user_prompt = input("\nYou: ")
-        if user_prompt.lower() in ["quit", "exit"]:
+        user_prompt = input("\nyou")
+        if user_prompt.lower() in ["quit","exit"]:
             break
+
 
         intent = query_llm_for_intent(user_prompt)
         action = intent.get("action", "chat")
@@ -153,6 +224,7 @@ User: {user_prompt}
 
             reply = "".join(reply_chunks).strip()
             print(f"LLM: {reply}")
+
 
 
 if __name__ == "__main__":

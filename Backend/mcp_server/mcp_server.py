@@ -8,6 +8,15 @@ from dotenv import load_dotenv
 import uvicorn
 
 # Load environment variables
+# =======
+# from dotenv import load_dotenv 
+# from mcp_clients.llm import handle_prompt
+# from flask import Flask, request, jsonify
+# from flask_cors import CORS
+
+# app = Flask(__name__)
+# CORS(app)
+# >>>>>>> main
 load_dotenv()
 
 # Initialize FastAPI
@@ -86,13 +95,74 @@ async def create_booking(booking: BookingRequest):
 
         return JSONResponse(content=response.data, status_code=201)
     except Exception as e:
+
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # Run with: uvicorn filename:app --host 0.0.0.0 --port 3000 --reload
+# =======
+#         return jsonify({"error": str(e)}), 500
+    
+# @app.route('/chat',methods =['POST'])
+# def chat_response():
+#     print("try to get response")
+#     try:
+#         print("try block")
+#         data = request.get_json()
+#         print("this is a data")
+#         user_prompt = data.get("prompt")
+#         print(user_prompt)
+#         if not user_prompt:
+#             return jsonify({"error": "Missing 'prompt'"}), 400
+#         result = handle_prompt(user_prompt)
+#         return jsonify(result), 200
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+    
+# # ROUTE 3: Query via LLM (Ollama)
+# @app.route('/query', methods=['POST'])
+# def query_llm():
+#     try:
+#         user_prompt = request.json.get("prompt")
+
+#         # Send the prompt to Ollama LLM
+#         ollama_response = requests.post(OLLAMA_API, json={
+#             "model": OLLAMA_MODEL,
+#             "prompt": user_prompt
+#         })
+
+#         if ollama_response.status_code != 200:
+#             return jsonify({"error": "LLM request failed", "details": ollama_response.text}), 500
+
+#         llm_text = ollama_response.json().get("response", "")
+
+#         # Basic intent detection
+#         lower_prompt = user_prompt.lower()
+#         if "show customers" in lower_prompt or "all customers" in lower_prompt:
+#             return get_customers()
+
+#         if "book appointment" in lower_prompt or "booking" in lower_prompt:
+#             # Example: parse LLM output later
+#             booking_data = {
+#                 "customer_id": 1,   # Default demo
+#                 "room_no": 1,       # Default demo
+#                 "start_date": "2025-09-10",
+#                 "end_date": "2025-09-12",
+#                 "num_people": 2,
+#                 "price": 500
+#             }
+#             with app.test_request_context(json=booking_data):
+#                 return create_booking()
+
+#         # Default: return LLM response
+#         return jsonify({"llm_response": llm_text}), 200
+# >>>>>>> main
 
 
 if __name__ == "__main__":
     uvicorn.run("mcp_server:app", host="0.0.0.0", port=3000, reload=True)
 
 
+# =======
+#     app.run(host="0.0.0.0", port=5000)
+# >>>>>>> main
