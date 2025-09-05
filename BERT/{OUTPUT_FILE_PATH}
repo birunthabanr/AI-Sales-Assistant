@@ -1,0 +1,2 @@
+<BookRestaurant> -> On [April:B-timeRange] [first:I-timeRange] I need a flight going from [Phoenix:B-city] to [San:B-city] [Diego:I-city]
+<BookRestaurant> -> I would like a flight from [Orlando:B-city] to [Salt:B-city] [Lake:I-city] [City:I-city] for [April:B-timeRange] [First:I-timeRange] on [Delta:B-location_name] [airlines:I-location_name]

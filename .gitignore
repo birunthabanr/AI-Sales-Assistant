@@ -19,3 +19,9 @@ Frontend/node_modules/
 # Ignore fine-tuned model folder
 Intent Classifier/distilbert-dstc8-intent/
 Intent Classifier/label_encoder.pkl
+
+Backend/MCP/chatbot/
+Backend/__pycache__/
+# Backend/MCP/
+BERT/exported_snips_model/
+BERT/snips_model/
