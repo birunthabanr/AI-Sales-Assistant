@@ -6,7 +6,7 @@ import re
 # Config
 MCP_SERVER_URL = "http://localhost:3000"   # Flask MCP server
 OLLAMA_API = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "llama3"  
+OLLAMA_MODEL = "llama3.1"  
 
 
 # Extract JSON from text
