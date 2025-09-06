@@ -13,34 +13,47 @@ const Navigation = () => {
   ];
 
   const handleLogout = () => {
-    navigate("/login");
+    navigate("/");
   };
 
   return (
-    <nav className="bg-card border-b px-4 py-3">
+    <nav className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-b border-gray-700 px-4 py-3 shadow-md">
       <div className="flex items-center justify-between max-w-6xl mx-auto">
-        <div className="flex items-center space-x-1">
+        {/* Left: Navigation Items */}
+        <div className="flex items-center space-x-2">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const isActive = location.pathname === item.path;
             return (
               <Button
                 key={item.path}
-                variant={location.pathname === item.path ? "default" : "ghost"}
                 onClick={() => navigate(item.path)}
-                className="flex items-center space-x-2"
+                variant="ghost"
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 
+                  ${isActive 
+                    ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md" 
+                    : "text-gray-300 hover:text-white hover:bg-gray-700/50"
+                  }`}
               >
                 <Icon className="h-4 w-4" />
-                <span>{item.label}</span>
+                <span className="text-sm font-medium">{item.label}</span>
               </Button>
             );
           })}
         </div>
-        <Button variant="ghost" onClick={handleLogout} className="flex items-center space-x-2">
+
+        {/* Right: Logout */}
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-red-600/80 transition-all duration-200"
+        >
           <LogOut className="h-4 w-4" />
-          <span>Logout</span>
+          <span className="text-sm font-medium">Logout</span>
         </Button>
       </div>
     </nav>
+
   );
 };
 

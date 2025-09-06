@@ -137,69 +137,99 @@ const Chat = () => {
   }, [messages]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      <div className="max-w-4xl mx-auto p-4">
-        <Card className="h-[calc(100vh-8rem)]">
-          <CardHeader>
-            <CardTitle>Hello! How can I assist you today?</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col h-full">
-            <ScrollArea className="flex-1 mb-4 pr-4">
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[70%] rounded-lg p-3 ${
-                        message.sender === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }`}
-                    >
-                      <p className="whitespace-pre-wrap">{message.text}</p>
-                      <p className="text-xs opacity-70 mt-1">
-                        {message.timestamp.toLocaleTimeString()}
-                      </p>
-                    </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-gray-100">
+  <Navigation />
+  <div className="max-w-4xl mx-auto p-4">
+    <Card className="h-[calc(95vh-8rem)] bg-gray-900/70 backdrop-blur-xl border border-gray-800 shadow-2xl rounded-2xl">
+      <CardHeader>
+        <CardTitle className="text-xl font-semibold text-white">
+          💬 Chat with AI
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col h-full">
+        <ScrollArea className="flex-1 mb-4 pr-4 custom-scrollbar">
+          <div className="space-y-6">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex items-end space-x-2 ${
+                  message.sender === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                {message.sender !== "user" && (
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs shadow-md">
+                    🤖
                   </div>
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="max-w-[70%] rounded-lg p-3 bg-muted">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                        <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-                      </div>
-                    </div>
+
+                )}
+                <div
+                  className={`relative max-w-[70%] rounded-2xl px-4 py-3 shadow-lg transition ${
+                    message.sender === "user"
+                      ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                      : "bg-gradient-to-r from-cyan-600 to-blue-600 text-white"
+                  } animate-fadeIn`}
+                >
+                  <p className="whitespace-pre-wrap leading-relaxed">
+                    {message.text}
+                  </p>
+                  <p className="text-[10px] opacity-70 mt-1 text-right">
+                    {message.timestamp.toLocaleTimeString()}
+                  </p>
+                </div>
+                {message.sender === "user" && (
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs shadow-md">
+                    👤
                   </div>
                 )}
               </div>
-            </ScrollArea>
-            <div className="flex space-x-2">
-              <Input
-                placeholder="Type your message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                disabled={isLoading}
-                className="flex-1"
-              />
-              <Button
-                onClick={sendMessage}
-                disabled={isLoading || !newMessage.trim()}
-                className="shrink-0"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+            ))}
+            {isLoading && (
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white text-xs shadow-md">
+                  🤖
+                </div>
+                <div className="max-w-[70%] rounded-2xl px-4 py-3 bg-gray-800 shadow-md">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+
+        {/* Input Section */}
+        <div className="flex items-center space-x-2 p-2 bg-gray-800 rounded-xl shadow-md">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-400 hover:text-white"
+          >
+            😊
+          </Button>
+          <Input
+            placeholder="Type your message..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            disabled={isLoading}
+            className="flex-1 bg-transparent border-0 text-gray-100 placeholder-gray-400 focus:ring-0"
+          />
+          <Button
+            onClick={sendMessage}
+            disabled={isLoading || !newMessage.trim()}
+            className="shrink-0 bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white rounded-xl shadow-md"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+</div>
+
   );
 };
 
