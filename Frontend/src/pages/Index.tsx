@@ -2,10 +2,15 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import supabase from "../config/supabaseClient";
+import { useAuthListener } from "./useAuth";
+import AnimatedBackground from "@/components/AnimationBackground";
 
 const Index = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<any>(null);
+  
+  // Call the hook at the top level
+  useAuthListener();
 
   useEffect(() => {
     // Get existing session
@@ -15,39 +20,6 @@ const Index = () => {
         localStorage.setItem("client_id", session.user.id);
       }
     });
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-
-        if (session?.user) {
-          localStorage.setItem("client_id", session.user.id);
-
-          const { id, email, user_metadata } = session.user;
-          const clientName = user_metadata?.full_name || email.split("@")[0];
-
-          // Insert client if not exists
-          const { error } = await supabase.from("client").upsert(
-            {
-              client_id: id, 
-              client_name: clientName,
-              company_id: null,
-            },
-            { onConflict: "client_id" }
-          );
-
-          if (error) console.error("Error creating client:", error);
-
-          // Redirect to chat
-          navigate("/chat");
-        }
-      }
-    );
-
-    return () => {
-      subscription?.unsubscribe();
-    };
   }, [navigate]);
 
   // Google OAuth
@@ -60,7 +32,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="bg-white/90 backdrop-blur-md shadow-xl rounded-2xl p-10 max-w-md w-full text-center space-y-6">
+      <AnimatedBackground/>
+      <div className=" from-indigo-600 to-violet-600 backdrop-blur-md shadow-xl rounded-2xl p-10 max-w-md w-full text-center space-y-6">
         <h1 className="text-4xl font-extrabold text-gray-900">
           Welcome to <span className="text-indigo-600">ChatApp</span>
         </h1>
