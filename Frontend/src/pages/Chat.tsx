@@ -57,18 +57,28 @@ const Chat = () => {
 
   const sendMessageToBackend = async (userMessage: string): Promise<string> => {
     try {
-      const response = await fetch("http://localhost:5000/chat", {
+      const response = await fetch("http://localhost:3000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: userMessage }),
       });
 
-      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-      const data = await response.json();
+      if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Backend error:", errorData);
+      return errorData.error || `HTTP error: ${response.status}`;
+      }
 
-      if (data.action === "chat") return data.result;
-      if (typeof data.result === "object") return JSON.stringify(data.result, null, 2);
-      return String(data.result);
+      const data = await response.json();
+      console.log("Backend response:", data);
+
+
+      if (data && data.action === "chat") return data.result;
+      if (data && typeof data.result === "object") return JSON.stringify(data.result, null, 2);
+      if (data && data.result) return String(data.result);
+
+      // fallback if backend only sends error
+      return data?.error || "Unexpected response from server";
     } catch (error) {
       console.error("Error sending message to backend:", error);
       return "Sorry, I'm having trouble connecting to the server. Please try again later.";
@@ -135,6 +145,9 @@ const Chat = () => {
   useEffect(() => {
     const scrollArea = document.querySelector('[data-radix-scroll-area-viewport]');
     if (scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
+    
+    const lastMessage = document.querySelector(".chat-message:last-child");
+    lastMessage?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   return (
@@ -157,7 +170,7 @@ const Chat = () => {
             </p>
           </CardHeader>
           <CardContent className="flex flex-col h-full p-0">
-            <ScrollArea className="flex-1 p-6 custom-scrollbar">
+            <ScrollArea className="flex-1 p-6 custom-scrollbar pb-28">
               <div className="space-y-6">
                 {messages.length === 0 && (
                   <div className="text-center py-12">

@@ -12,7 +12,6 @@ OLLAMA_MODEL = "llama3"
 # Extract JSON from text
 def extract_json(text: str):
     print("this is extract_json")
-    """Try to extract the first {...} JSON object from text."""
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if match:
         try:
@@ -88,48 +87,76 @@ Rules:
 
 def handle_prompt(user_prompt: str):
     print("this is handle_prompt()")
-    """Process a single user prompt and return structured response."""
     intent = query_llm_for_intent(user_prompt)
     action = intent.get("action", "chat")
     args = intent.get("args", {})
 
     if action == "get_customers":
-        res = requests.get(f"{MCP_SERVER_URL}/customers")
-        return {"action": "get_customers", "result": res.json()}
-
+        print("this is a get_customers function")
+        try:
+            res = requests.get(f"{MCP_SERVER_URL}/customers")
+            res.raise_for_status()
+            data = res.json()
+            print("this is a customers list:", data)
+            return data
+        except requests.exceptions.RequestException as e:
+            return {"action": "get_customers", "result": [], "error": str(e)}
+    
     elif action == "create_booking":
+        required_fields = ["customer_id", "room_no", "start_date", "end_date", "num_people"]
+        missing_fields = [field for field in required_fields if args.get(field) is None]
+
+        # For now, instead of input() (which blocks server), return a request for missing fields
+        if missing_fields:
+            return {
+                "action": "create_booking",
+                "error": "Missing required fields",
+                "missing_fields": missing_fields
+            }
+
         booking_data = {
-            "customer_id": args.get("customer_id", 1),
-            "room_no": args.get("room_no", 101),
-            "start_date": args.get("start_date", "2025-09-10"),
-            "end_date": args.get("end_date", "2025-09-12"),
-            "num_people": args.get("num_people", 2),
-            "price": args.get("price", 500)
+            "customer_id": args["customer_id"],
+            "room_no": args["room_no"],
+            "start_date": args["start_date"],
+            "end_date": args["end_date"],
+            "num_people": args["num_people"]
         }
-        res = requests.post(f"{MCP_SERVER_URL}/bookings", json=booking_data)
-        return {"action": "create_booking", "result": res.json()}
+        try:
+            res = requests.post(f"{MCP_SERVER_URL}/bookings", json=booking_data)
+            res.raise_for_status()
+            return {"action": "create_booking", "result": res.json()}
+        except Exception as e:
+            return {"action": "create_booking", "error": str(e)}
 
-    else:
-        chat_resp = requests.post(OLLAMA_API, json={
-            "model": OLLAMA_MODEL,
-            "prompt": user_prompt,
-            "stream": True
-        }, stream=True)
+    else:  # chat
+        assistant_prompt = (
+            f"You are a helpful hotel assistant. "
+            f"Answer the user's question or help with hotel-related tasks. "
+            f"User: {user_prompt}"
+        )
+        try:
+            chat_resp = requests.post(
+                OLLAMA_API,
+                json={"model": OLLAMA_MODEL, "prompt": assistant_prompt, "stream": True},
+                stream=True,
+            )
 
-        reply_chunks = []
-        for line in chat_resp.iter_lines():
-            if not line:
-                continue
-            try:
-                data = json.loads(line.decode("utf-8"))
-                if "response" in data:
-                    reply_chunks.append(data["response"])
-            except json.JSONDecodeError:
-                continue
+            reply_chunks = []
+            for line in chat_resp.iter_lines():
+                if not line:
+                    continue
+                try:
+                    data = json.loads(line.decode("utf-8"))
+                    if "response" in data:
+                        reply_chunks.append(data["response"])
+                except json.JSONDecodeError:
+                    continue
 
-        reply = "".join(reply_chunks).strip()
-        return {"action": "chat", "result": reply}
-
+            reply = "".join(reply_chunks).strip()
+            print(f"LLM: {reply}")
+            return {"action": "chat", "result": reply}
+        except Exception as e:
+            return {"action": "chat", "error": str(e)}
 
 # Main loop
 # def run_client():
