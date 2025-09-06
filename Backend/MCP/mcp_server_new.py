@@ -86,7 +86,7 @@ def add_to_playlist(user_id: str, playlist_name: str, song_title: str, artist: s
         return f"Mock: Added '{song_title}' by {artist} to playlist '{playlist_name}' for user {user_id}"
     
     try:
-        playlist_result = supabase.table("playlists").select("*").eq("user_id", user_id).eq("playlist_name", playlist_name).execute()
+        playlist_result = supabase.table("playlists").select("*").eq("user_id", 123).eq("playlist_name", playlist_name).execute()
         
         song_data = {"title": song_title, "artist": artist, "added_at": datetime.now().isoformat()}
         
@@ -312,7 +312,7 @@ async def get_bookings_by_customer(customer_id: int) -> List[Dict[str, Any]]:
         List of booking records for the specified customer.
     """
     try:
-        response = supabase.table("booking").select("*").eq("customerid", customer_id).execute()
+        response = supabase.table("booking").select("*").eq("customer_id", customer_id).execute()
         return response.data
     except Exception as e:
         raise Exception(f"Failed to retrieve bookings for customer {customer_id}: {str(e)}")
@@ -347,34 +347,35 @@ async def get_available_rooms(start_date: str, end_date: str) -> List[Dict[str, 
     except Exception as e:
         raise Exception(f"Failed to get available rooms: {str(e)}")
 
-@mcp.tool()
-async def query_with_llm(prompt: str) -> str:
-    """
-    Query the local Ollama LLM with a prompt.
+# @mcp.tool()
+# async def query_with_llm(prompt: str) -> str:
+#     """
+#     Query the local Ollama LLM with a prompt.
     
-    Args:
-        prompt: The question or prompt to send to the LLM
+#     Args:
+#         prompt: The question or prompt to send to the LLM
     
-    Returns:
-        The LLM's response as a string.
-    """
-    try:
-        async with aiohttp.ClientSession() as session:
-            payload = {
-                "model": OLLAMA_MODEL,
-                "prompt": prompt,
-                "stream": False
-            }
+#     Returns:
+#         The LLM's response as a string.
+#     """
+#     try:
+#         async with aiohttp.ClientSession() as session:
+#             payload = {
+#                 "model": OLLAMA_MODEL,
+#                 "prompt": prompt,
+#                 "stream": False
+#             }
             
-            async with session.post(OLLAMA_API, json=payload) as response:
-                if response.status != 200:
-                    error_text = await response.text()
-                    raise Exception(f"LLM request failed: {error_text}")
+#             async with session.post(OLLAMA_API, json=payload) as response:
+#                 if response.status != 200:
+#                     error_text = await response.text()
+#                     raise Exception(f"LLM request failed: {error_text}")
                 
-                result = await response.json()
-                return result.get("response", "")
-    except Exception as e:
-        raise Exception(f"Failed to query LLM: {str(e)}")
+#                 result = await response.json()
+#                 return result.get("response", "")
+#     except Exception as e:
+#         raise Exception(f"Failed to query LLM: {str(e)}")
 
 if __name__ == "__main__":
-    mcp.run(transport="sse", host="127.0.0.1", port=8000)
+    mcp.run(transport="sse", host="127.0.0.1", port=0)
+    # mcp.run()
