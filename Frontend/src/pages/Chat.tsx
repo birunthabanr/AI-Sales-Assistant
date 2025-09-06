@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Bot, User, Sparkles } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import supabase from "../config/supabaseClient";
+import AnimatedBackground from "@/components/AnimationBackground";
 
 interface Message {
   id: number;
@@ -138,6 +139,7 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-purple-900 to-violet-950 text-gray-100">
+      <AnimatedBackground/>
       <Navigation />
       <div className="max-w-4xl mx-auto p-4">
         <Card className="h-[calc(95vh-8rem)] bg-gray-900/40 backdrop-blur-xl border border-indigo-500/30 shadow-2xl shadow-purple-500/10 rounded-2xl overflow-hidden">

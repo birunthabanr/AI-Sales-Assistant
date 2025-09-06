@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import supabase from "../config/supabaseClient";
 import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
+import AnimatedBackground from "@/components/AnimationBackground";
 import {
   Table,
   TableBody,
@@ -63,9 +64,10 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-purple-900 to-violet-950 text-gray-100">
+      <AnimatedBackground/>
   <Navigation />
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-gray-100 p-8">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-950 via-purple-900 to-violet-950 text-gray-100 p-8">
       <h1 className="text-3xl font-extrabold text-center mb-8">
         📊 Dashboard
       </h1>
@@ -73,7 +75,7 @@ const DashboardPage = () => {
       {/* Two-column grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Restaurants Table */}
-        <Card className="shadow-2xl rounded-2xl border border-gray-800 bg-gray-900">
+        <Card className="shadow-2xl rounded-2xl border border-indigo-950 bg-purple-900">
           <CardContent>
             <h2 className="text-xl font-bold mb-4 text-blue-400">
               🍽️ Restaurants
@@ -111,7 +113,7 @@ const DashboardPage = () => {
         </Card>
 
         {/* Customers Table */}
-        <Card className="shadow-2xl rounded-2xl border border-gray-800 bg-gray-900">
+        <Card className="shadow-2xl rounded-2xl border border-indigo-950 bg-purple-900">
           <CardContent>
             <h2 className="text-xl font-bold mb-4 text-green-400">
               👤 Customers
