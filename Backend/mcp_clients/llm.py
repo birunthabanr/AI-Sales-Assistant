@@ -80,56 +80,6 @@ Rules:
     return parsed
 
 
-def handle_prompt(user_prompt: str):
-    print("this is handle_prompt()")
-    """Process a single user prompt and return structured response."""
-    intent = query_llm_for_intent(user_prompt)
-    action = intent.get("action", "chat")
-    args = intent.get("args", {})
-
-    if action == "get_customers":
-        res = requests.get(f"{MCP_SERVER_URL}/customers")
-        return {"action": "get_customers", "result": res.json()}
-
-    elif action == "create_booking":
-        booking_data = {
-            "customer_id": args.get("customer_id", 1),
-            "room_no": args.get("room_no", 101),
-            "start_date": args.get("start_date", "2025-09-10"),
-            "end_date": args.get("end_date", "2025-09-12"),
-            "num_people": args.get("num_people", 2),
-            "price": args.get("price", 500)
-        }
-        res = requests.post(f"{MCP_SERVER_URL}/bookings", json=booking_data)
-        return {"action": "create_booking", "result": res.json()}
-
-    else:
-        chat_resp = requests.post(OLLAMA_API, json={
-            "model": OLLAMA_MODEL,
-            "prompt": user_prompt,
-            "stream": True
-        }, stream=True)
-
-        reply_chunks = []
-        for line in chat_resp.iter_lines():
-            if not line:
-                continue
-            try:
-                data = json.loads(line.decode("utf-8"))
-                if "response" in data:
-                    reply_chunks.append(data["response"])
-            except json.JSONDecodeError:
-                continue
-
-        raw = "".join(reply_chunks).strip()
-
-    parsed = extract_json(raw)
-    if not parsed:
-        parsed = {"action": "chat", "args": {"response": raw}}
-
-    return parsed
-
-
 # Main loop
 def run_client():
     print("Welcome to Hotel Assistant 🏨 (type 'quit' to exit)")
