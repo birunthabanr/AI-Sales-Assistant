@@ -10,6 +10,8 @@ import Chat from "./pages/Chat";
 import CalendarPage from "./pages/CalendarPage";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import DashBoard from "./pages/Dashboard"
+import Navigation from "./components/Navigation";
 
 const queryClient = new QueryClient();
 
@@ -21,10 +23,11 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          {/* <Route path="/login" element={<Login />} /> */}
+          {/* <Route path="/signup" element={<Signup />} /> */}
           <Route path="/chat" element={<Chat />} />
-          <Route path="/calendar" element={<CalendarPage />} />
+          {/* <Route path="/calendar" element={<CalendarPage />} /> */}
+          <Route path="/dashboard" element={<DashBoard />} />
           <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

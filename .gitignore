@@ -25,3 +25,8 @@ Backend/__pycache__/
 # Backend/MCP/
 BERT/exported_snips_model/
 BERT/snips_model/
+
+Backend/MCP/snips_model/
+Backend/MCP/snips_model/model.safetensors
+Backend/MCP/snips_model/model.safetensors
+Backend/MCP/snips_model/model.safetensors

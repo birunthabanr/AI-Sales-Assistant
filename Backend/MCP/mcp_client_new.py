@@ -2,13 +2,17 @@ import asyncio
 import json
 import re
 import requests
+import os
+import sys
+from typing import Dict, Any, Optional, List
+from dataclasses import dataclass
 from fastmcp import Client
+
 
 # Config
 OLLAMA_API = "http://localhost:11434/api/generate"
 OLLAMA_MODEL = "llama3"
 FASTMCP_SERVER_URL = "http://localhost:8000/sse"
-
 
 def extract_json(text: str):
     """Try to extract the first {...} JSON object from text."""
@@ -63,20 +67,21 @@ def query_llm_for_intent(user_prompt: str, available_tools: list):
 
     tool_names = [tool.name for tool in available_tools]
     tool_descriptions = "\n".join([f"- {tool.name}: {tool.description}" for tool in available_tools])
-
     system_prompt = f"""
-You are an intent parser for a hotel booking assistant using MCP tools.
+You are an intelligent tool selector for a multi-domain assistant.
+
+User request: "{user_prompt}"
+{jointbert_context}
 
 Available MCP tools:
 {tool_descriptions}
 
-User request: "{user_prompt}"
-
-Respond ONLY in JSON with this format:
+Based on the user request and any available JointBERT analysis, select the most appropriate tool and generate arguments.
+Return ONLY a JSON object in this format:
 {{
   "tool_name": "TOOL_NAME" | "chat",
   "arguments": {{
-    // tool-specific arguments based on the tool's schema
+    // tool-specific arguments
   }}
 }}
 
@@ -150,7 +155,7 @@ async def run_client():
                 print(f"  - {tool.name}: {tool.description}")
 
             while True:
-                user_prompt = input("\nYou: ")
+                user_prompt = input("\n👤 You: ")
                 if user_prompt.lower() in ["quit", "exit"]:
                     break
 
@@ -207,4 +212,24 @@ async def run_client():
 
 
 if __name__ == "__main__":
-    asyncio.run(run_client())
+    # Test JointBERT model first
+    if snips_model_loaded:
+        print("🧪 Testing JointBERT model...")
+        test_inputs = [
+            "Add some jazz music to my workout playlist",
+            "Book a table at Mario's for tonight",
+            "What's the weather in New York?",
+            "Play some rock music",
+            "Rate The Great Gatsby 4 stars"
+        ]
+        
+        for test_input in test_inputs:
+            result = process_intent_slots(test_input)
+            if result:
+                print(f"Input: {test_input}")
+                print(f"Intent: {result.intent}")
+                print(f"Slots: {result.entities}")
+                print("-" * 50)
+    
+    # Run the enhanced client
+    asyncio.run(run_enhanced_client())
