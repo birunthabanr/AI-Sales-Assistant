@@ -78,8 +78,6 @@ Rules:
         parsed = {"action": "chat", "args": {"response": raw}}
 
     return parsed
-
-
 # Main loop
 def run_client():
     print("Welcome to Hotel Assistant 🏨 (type 'quit' to exit)")
