@@ -9,6 +9,9 @@ output/
 notebooks/DSTC8/mlruns/
 notebooks/DSTC8/results/
 Data/filtered_dialogues.json
+Frontend/node_modules/
+
+.DS_Store
 Data/filtered_dialogues.json
 .env
 Frontend/node_modules/
@@ -16,3 +19,14 @@ Frontend/node_modules/
 # Ignore fine-tuned model folder
 Intent Classifier/distilbert-dstc8-intent/
 Intent Classifier/label_encoder.pkl
+
+Backend/MCP/chatbot/
+Backend/__pycache__/
+# Backend/MCP/
+BERT/exported_snips_model/
+BERT/snips_model/
+
+Backend/MCP/snips_model/
+Backend/MCP/snips_model/model.safetensors
+Backend/MCP/snips_model/model.safetensors
+Backend/MCP/snips_model/model.safetensors
