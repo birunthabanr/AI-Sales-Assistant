@@ -8,21 +8,21 @@ import AnimatedBackground from "@/components/AnimationBackground";
 const Index = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<any>(null);
-  
-  // Call the hook at the top level
+
+  // Listen for auth changes
   useAuthListener();
 
   useEffect(() => {
-    // Get existing session
+    // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
-        localStorage.setItem("client_id", session.user.id);
+        ensureUserInTable(session.user);
       }
     });
   }, [navigate]);
 
-  // Google OAuth
+  // ✅ Google OAuth Login
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -30,10 +30,28 @@ const Index = () => {
     if (error) console.error("Google login error:", error);
   };
 
+  // ✅ Ensure user exists in "User" table
+  const ensureUserInTable = async (user: any) => {
+    const { data: existingUser } = await supabase
+      .from("User")
+      .select("id")
+      .eq("id", user.id)
+      .single();
+
+    if (!existingUser) {
+      await supabase.from("User").insert({
+        id: user.id,
+        name: user.user_metadata?.full_name || "",
+        email: user.email,
+        chat: [],
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <AnimatedBackground/>
-      <div className=" from-indigo-600 to-violet-600 backdrop-blur-md shadow-xl rounded-2xl p-10 max-w-md w-full text-center space-y-6">
+      <AnimatedBackground />
+      <div className="from-indigo-600 to-violet-600 backdrop-blur-md shadow-xl rounded-2xl p-10 max-w-md w-full text-center space-y-6">
         <h1 className="text-4xl font-extrabold text-gray-900">
           Welcome to <span className="text-indigo-600">ChatApp</span>
         </h1>
