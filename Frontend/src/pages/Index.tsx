@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import supabase from "../config/supabaseClient";
 import { useAuthListener } from "./useAuth";
@@ -7,20 +6,7 @@ import AnimatedBackground from "@/components/AnimationBackground";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [session, setSession] = useState<any>(null);
-
-  // Listen for auth changes
-  useAuthListener();
-
-  useEffect(() => {
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        ensureUserInTable(session.user);
-      }
-    });
-  }, [navigate]);
+  const { session } = useAuthListener();
 
   // ✅ Google OAuth Login
   const handleGoogleLogin = async () => {
@@ -28,24 +14,6 @@ const Index = () => {
       provider: "google",
     });
     if (error) console.error("Google login error:", error);
-  };
-
-  // ✅ Ensure user exists in "User" table
-  const ensureUserInTable = async (user: any) => {
-    const { data: existingUser } = await supabase
-      .from("User")
-      .select("id")
-      .eq("id", user.id)
-      .single();
-
-    if (!existingUser) {
-      await supabase.from("User").insert({
-        id: user.id,
-        name: user.user_metadata?.full_name || "",
-        email: user.email,
-        chat: [],
-      });
-    }
   };
 
   return (
