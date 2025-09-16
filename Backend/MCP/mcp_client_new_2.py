@@ -6,7 +6,7 @@ from fastmcp import Client
 
 # Config
 OLLAMA_API = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "deepseek-r1:7b"
+OLLAMA_MODEL = "llama3"
 FASTMCP_SERVER_URL = "http://localhost:8000/sse"
 
 
@@ -56,19 +56,27 @@ def chat_with_llm(user_prompt: str):
 
 def query_llm_for_intent(user_prompt: str, available_tools: list):
     """
-    Ask LLM to pick a tool or 'chat'.
+    Ask LLM to pick a tool or 'chat', and extract arguments according to tool schemas.
     """
     if not available_tools:
         return {"tool_name": "chat", "arguments": {}}
 
+    tool_descriptions = []
+    for tool in available_tools:
+        schema = getattr(tool, "input_schema", None)
+        schema_str = json.dumps(schema, ensure_ascii=False, indent=2) if schema else "{}"
+        tool_descriptions.append(
+            f"- {tool.name}: {tool.description}\n  Expected arguments schema:\n{schema_str}"
+        )
+
+    tool_list_str = "\n".join(tool_descriptions)
     tool_names = [tool.name for tool in available_tools]
-    tool_descriptions = "\n".join([f"- {tool.name}: {tool.description}" for tool in available_tools])
 
     system_prompt = f"""
-You are an intent parser for a hotel booking assistant using MCP tools.
+You are a multi-agent intent parser for a general assistant powered by MCP tools.
 
-Available MCP tools:
-{tool_descriptions}
+Available MCP tools (agents):
+{tool_list_str}
 
 User request: "{user_prompt}"
 
@@ -76,24 +84,20 @@ Respond ONLY in JSON with this format:
 {{
   "tool_name": "TOOL_NAME" | "chat",
   "arguments": {{
-    // tool-specific arguments based on the tool's schema
+    // tool-specific arguments that match the schema above
   }}
 }}
 
 Rules:
-- Choose the most appropriate MCP tool from: {', '.join(tool_names)}
-- Use "chat" if no MCP tool is needed for a general conversation
-- Always return valid JSON. Do not add extra text.
-- Match arguments to the specific tool's expected parameters
-- Respond ONLY in STRICT JSON (RFC 8259).
-- Do NOT include comments like // or extra text.
-- Use null (without quotes) for missing values, not "null".
-- Always return valid JSON that can be parsed by json.loads in Python.
-
+- Choose the best tool from: {', '.join(tool_names)}.
+- Use "chat" if no tool is relevant.
+- Arguments must exactly match the tool's schema (correct names, correct types).
+- If user input does not contain a required argument, set it to null.
+- Always return valid JSON. Do not add text or comments.
+- Use null (without quotes) for missing values.
 """
 
     raw = _ollama_stream(system_prompt)
-    # print(f"🔎 Raw LLM intent output:\n{raw}\n")   # DEBUG: raw LLM output
 
     parsed = extract_json(raw)
     if not parsed:
@@ -208,3 +212,4 @@ async def run_client():
 
 if __name__ == "__main__":
     asyncio.run(run_client())
+
