@@ -21,7 +21,7 @@ const Index = () => {
       <AnimatedBackground />
       <div className="from-indigo-600 to-violet-600 backdrop-blur-md shadow-xl rounded-2xl p-10 max-w-md w-full text-center space-y-6">
         <h1 className="text-4xl font-extrabold text-gray-900">
-          Welcome to <span className="text-indigo-600">ChatApp</span>
+          Welcome to <span className="text-indigo-600">Chat Assistant</span>
         </h1>
         <p className="text-lg text-gray-600">
           Chat, schedule events, and manage your profile all in one place!

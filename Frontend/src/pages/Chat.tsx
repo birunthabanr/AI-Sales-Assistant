@@ -81,14 +81,21 @@ const Chat = () => {
 
   const sendMessageToBackend = async (userMessage: string): Promise<string> => {
     try {
-      const response = await fetch("http://localhost:5000/chat", {
+      const response = await fetch("http://localhost:3000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: userMessage }),
       });
 
-      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Backend error:", errorData);
+      return errorData.error || `HTTP error: ${response.status}`;
+      }
+
       const data = await response.json();
+      console.log("Backend response:", data);
+
 
       if (data.action === "chat") return data.result;
       if (typeof data.result === "object")
