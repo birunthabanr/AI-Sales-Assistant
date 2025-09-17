@@ -47,7 +47,7 @@ const Chat = () => {
       .select("chat_logs")
       .eq("id", userid)
       .single(); // ✅ ensure only one row is returned
-      console.log(data)
+      // console.log(data)
     if (error) {
       console.error("Error fetching chats:", error);
       return;
@@ -61,7 +61,7 @@ const Chat = () => {
           timestamp: new Date(msg.timestamp),
         })),
       }));
-      console.log(data)
+      // console.log(data)
       setChatTabs(formatted);
       localStorage.setItem("chats", JSON.stringify(formatted));
     }
@@ -103,6 +103,7 @@ const Chat = () => {
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
 
+    // 1️⃣ Create user message
     const userMessage: Message = {
       id: Date.now(),
       text: newMessage,
@@ -110,14 +111,16 @@ const Chat = () => {
       timestamp: new Date(),
     };
 
-    const updated = [...messages, userMessage];
-    setMessages(updated);
+    // 2️⃣ Immediately add user message to state
+    setMessages((prev) => [...prev, userMessage]);
     setNewMessage("");
     setIsLoading(true);
 
     try {
+      // 3️⃣ Send message to backend
       const botResponse = await sendMessageToBackend(newMessage);
 
+      // 4️⃣ Create bot message
       const botMessage: Message = {
         id: Date.now() + 1,
         text: botResponse,
@@ -125,36 +128,56 @@ const Chat = () => {
         timestamp: new Date(),
       };
 
-      const finalMessages = [...updated, botMessage];
+      // 5️⃣ Determine if new tab or existing
+      let newTabs: ChatTab[] = [...chatTabs];
 
-      // ✅ prepare newTabs first
-      const newTabs = chatTabs.map((tab) =>
-        tab.id === activeChatId ? { ...tab, content: finalMessages } : tab
-      );
+      if (activeChatId && activeChatId !== 0) {
+        // Update existing tab
+        newTabs = newTabs.map((tab) =>
+          tab.id === activeChatId
+            ? { ...tab, content: [...tab.content, userMessage, botMessage] }
+            : tab
+        );
+      } else {
+        // Create new tab
+        const newTab: ChatTab = {
+          id: Date.now(),
+          tab: `Chat ${newTabs.length + 1}`,
+          content: [userMessage, botMessage],
+        };
+        newTabs.push(newTab);
+        setActiveChatId(newTab.id);
+      }
 
-      setMessages(finalMessages);
+      // 6️⃣ Update state with bot message
+      setMessages((prev) => [...prev, botMessage]);
       setChatTabs(newTabs);
       localStorage.setItem("chats", JSON.stringify(newTabs));
 
-      // ✅ now safe to update Supabase
-      const { error } = await supabase
+      // 7️⃣ Convert timestamps for Supabase
+      const processedTabs = newTabs.map((tab) => ({
+        ...tab,
+        content: tab.content.map((m) => ({
+          ...m,
+          timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : m.timestamp,
+        })),
+      }));
+
+      const { data, error } = await supabase
         .from("users")
-        .update({
-          chat_logs: newTabs.map((tab) => ({
-            ...tab,
-            content: tab.content.map((m) => ({
-              ...m,
-              timestamp: m.timestamp.toISOString(),
-            })),
-          })),
-        })
-        .eq("id", userid);
+        .update({ chat_logs: processedTabs })
+        .eq("id", userid)
+        .select();
 
       if (error) console.error("Error updating Supabase:", error);
+      else console.log("✅ Updated chat logs:", data);
+    } catch (error) {
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
+
 
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
