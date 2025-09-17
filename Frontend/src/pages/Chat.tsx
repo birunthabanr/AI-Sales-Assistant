@@ -195,7 +195,7 @@ const Chat = () => {
             </CardHeader>
 
             <CardContent className="flex flex-col h-full p-0">
-              <ScrollArea className="flex-1 p-6 custom-scrollbar">
+              <ScrollArea className="flex-1 p-6 pb-28 custom-scrollbar">
                 <div className="space-y-6">
                   {messages.length === 0 && (
                     <div className="text-center py-12">

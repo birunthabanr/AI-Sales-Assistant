@@ -151,6 +151,7 @@ If next steps are obvious (e.g., ask for missing fields), mention them briefly.
 async def run_client(request: Request):
     body = await request.json()
     user_prompt = body.get("prompt", "").strip()
+    print(f"user messege {user_prompt}")
 
     if not user_prompt:
         return JSONResponse({"action": "chat", "result": "⚠️ Empty message"})
