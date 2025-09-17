@@ -1,8 +1,8 @@
 import asyncio
 import os
-import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 import aiohttp
+from datetime import datetime
 from supabase import create_client
 from dotenv import load_dotenv
 from fastmcp import FastMCP
@@ -14,13 +14,14 @@ load_dotenv()
 mcp = FastMCP("AI System")
 
 # Load Supabase credentials
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+print(SUPABASE_URL,SUPABASE_KEY)
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Ollama API configuration
 OLLAMA_API = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "llama3.1"
+OLLAMA_MODEL = "llama3"
 
 @mcp.tool()
 async def get_all_customers() -> List[Dict[str, Any]]:
@@ -377,5 +378,5 @@ async def get_available_rooms(start_date: str, end_date: str) -> List[Dict[str, 
 #         raise Exception(f"Failed to query LLM: {str(e)}")
 
 if __name__ == "__main__":
-    mcp.run(transport="sse", host="127.0.0.1", port=0)
+    mcp.run(transport="sse", host="127.0.0.1", port=8000)
     # mcp.run()

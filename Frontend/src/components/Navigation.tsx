@@ -15,7 +15,7 @@ const Navigation = () => {
   const handleLogout = () => navigate("/");
 
   return (
-    <nav className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-500 border-b border-white/20 px-4 py-3 shadow-lg">
+    <nav className="bg-gradient-to-r from-gray-950 via-gray-900 to-black border-b border-white/20 px-4 py-3 shadow-lg">
       <div className="flex items-center justify-between max-w-6xl mx-auto">
         <div className="flex items-center space-x-2">
           {navItems.map((item) => {

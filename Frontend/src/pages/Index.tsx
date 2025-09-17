@@ -17,27 +17,27 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black flex items-center justify-center">
       <AnimatedBackground />
-      <div className="from-indigo-600 to-violet-600 backdrop-blur-md shadow-xl rounded-2xl p-10 max-w-md w-full text-center space-y-6">
-        <h1 className="text-4xl font-extrabold text-gray-900">
-          Welcome to <span className="text-indigo-600">ChatApp</span>
+      <div className="bg-gradient-to-b from-gray-950 via-gray-900 to-black backdrop-blur-md shadow-xl rounded-2xl p-10 max-w-md w-full text-center space-y-6">
+        <h1 className="text-4xl font-extrabold text-white">
+          Welcome to <span className="text-indigo-500">ChatApp</span>
         </h1>
-        <p className="text-lg text-gray-600">
+        <p className="text-lg text-gray-300">
           Chat, schedule events, and manage your profile all in one place!
         </p>
 
         <div className="pt-4">
           {session ? (
             <Button
-              className="w-full rounded-xl bg-green-600 hover:bg-green-700 text-white text-lg py-6"
+              className="w-full rounded-xl bg-gray-700 hover:bg-gray-600 text-white text-lg py-6"
               onClick={() => navigate("/chat")}
             >
               Go to Chat
             </Button>
           ) : (
             <Button
-              className="w-full rounded-xl bg-red-600 hover:bg-red-700 text-white text-lg py-6"
+              className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-lg py-6"
               onClick={handleGoogleLogin}
             >
               Continue with Google

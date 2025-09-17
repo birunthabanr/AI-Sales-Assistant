@@ -47,7 +47,7 @@ const Chat = () => {
       .select("chat_logs")
       .eq("id", userid)
       .single(); // ✅ ensure only one row is returned
-
+      console.log(data)
     if (error) {
       console.error("Error fetching chats:", error);
       return;
@@ -61,7 +61,7 @@ const Chat = () => {
           timestamp: new Date(msg.timestamp),
         })),
       }));
-
+      console.log(data)
       setChatTabs(formatted);
       localStorage.setItem("chats", JSON.stringify(formatted));
     }
@@ -101,7 +101,7 @@ const Chat = () => {
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !activeChatId) return;
+    if (!newMessage.trim()) return;
 
     const userMessage: Message = {
       id: Date.now(),
@@ -126,38 +126,43 @@ const Chat = () => {
       };
 
       const finalMessages = [...updated, botMessage];
-      setMessages(finalMessages);
 
-      // ✅ Update Supabase
-      const { error } = await supabase
-        .from("chat_log")
-        .update({
-          content: finalMessages.map((m) => ({
-            ...m,
-            timestamp: m.timestamp.toISOString(),
-          })),
-        })
-        .eq("id", activeChatId);
-
-      if (error) console.error("Error updating Supabase:", error);
-
-      // ✅ Update local state + localStorage
+      // ✅ prepare newTabs first
       const newTabs = chatTabs.map((tab) =>
         tab.id === activeChatId ? { ...tab, content: finalMessages } : tab
       );
+
+      setMessages(finalMessages);
       setChatTabs(newTabs);
       localStorage.setItem("chats", JSON.stringify(newTabs));
+
+      // ✅ now safe to update Supabase
+      const { error } = await supabase
+        .from("users")
+        .update({
+          chat_logs: newTabs.map((tab) => ({
+            ...tab,
+            content: tab.content.map((m) => ({
+              ...m,
+              timestamp: m.timestamp.toISOString(),
+            })),
+          })),
+        })
+        .eq("id", userid);
+
+      if (error) console.error("Error updating Supabase:", error);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !isLoading) sendMessage();
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-indigo-950 via-purple-900 to-violet-950 text-gray-100">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-gray-100">
       <AnimatedBackground />
       <Navigation />
 
@@ -173,7 +178,7 @@ const Chat = () => {
         />
 
         {/* Chat Area */}
-        <div className="max-w-4xl mx-auto p-4 flex-1 flex flex-col">
+        <div className="max-w-3xl mx-auto p-4 flex-1 flex flex-col">
           <Card className="h-[calc(95vh-8rem)] bg-gray-900/40 backdrop-blur-xl border border-indigo-500/30 shadow-2xl shadow-purple-500/10 rounded-2xl overflow-hidden flex flex-col">
             <CardHeader className="bg-gradient-to-r from-indigo-600 to-violet-600 border-b border-indigo-400/30">
               <div className="flex items-center space-x-3">
@@ -223,7 +228,7 @@ const Chat = () => {
                       <div
                         className={`relative max-w-[75%] rounded-2xl px-4 py-3 ${
                           message.sender === "user"
-                            ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white"
+                            ? "bg-gradient-to-r from-slate-800 to-gray-800 text-white"
                             : "bg-gradient-to-r from-slate-800 to-gray-800 text-white border border-gray-700"
                         }`}
                       >
