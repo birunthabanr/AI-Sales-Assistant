@@ -1,17 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 from supabase import create_client
 import os
 import requests
 from dotenv import load_dotenv
-import uvicorn
 
-# Load environment variables
-load_dotenv()
-
-# Initialize FastAPI
-app = FastAPI()
 
 # Load Supabase credentials
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -35,17 +28,7 @@ class BookingRequest(BaseModel):
     num_people: int = 1  # default = 1
 
 
-# ROUTE 1: Retrieve all customers
-@app.get("/customers")
-async def get_customers():
-    try:
-        response = supabase.table("customer").select("*").execute()
-        if hasattr(response, "data"):
-            return JSONResponse(content=response.data, status_code=200)
-        else:
-            raise HTTPException(status_code=500, detail="Supabase response missing 'data' attribute.")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 # ROUTE 2: Create new booking
@@ -94,10 +77,3 @@ async def create_booking(booking: BookingRequest):
         }).execute()
 
         return JSONResponse(content=response.data, status_code=201)
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-if __name__ == "__main__":
-    uvicorn.run("mcp_server:app", host="0.0.0.0", port=3000, reload=True)
