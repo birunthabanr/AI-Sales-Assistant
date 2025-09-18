@@ -29,18 +29,15 @@ const DashboardPage = () => {
     "orders",
     "payments",
     "playlist_items",
-    "playlits",
+    "playlists",
     "refund_requests",
     "refunds",
-    "refunds",
-    "resturants",
     "reviews",
     "songs",
     "tickets",
-    "users"
-
-    // add more table names or fetch dynamically
+    "users",
   ]);
+
   const [activeTable, setActiveTable] = useState<string | null>(null);
   const [columns, setColumns] = useState<string[]>([]);
   const [rows, setRows] = useState<Row[]>([]);
@@ -49,9 +46,11 @@ const DashboardPage = () => {
   // Load data when table changes
   useEffect(() => {
     if (!activeTable) return;
+
     const fetchData = async () => {
       setLoading(true);
       const { data, error } = await supabase.from(activeTable).select("*");
+
       if (error) {
         console.error("Error fetching:", error);
         setRows([]);
@@ -63,8 +62,10 @@ const DashboardPage = () => {
         setRows([]);
         setColumns([]);
       }
+
       setLoading(false);
     };
+
     fetchData();
   }, [activeTable]);
 
@@ -83,12 +84,11 @@ const DashboardPage = () => {
             <button
               key={t}
               onClick={() => setActiveTable(t)}
-              className={`px-4 py-2 rounded-xl font-bold transition shadow-md 
-                ${
-                  activeTable === t
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                }`}
+              className={`px-4 py-2 rounded-xl font-bold transition shadow-md ${
+                activeTable === t
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
             >
               {t}
             </button>
