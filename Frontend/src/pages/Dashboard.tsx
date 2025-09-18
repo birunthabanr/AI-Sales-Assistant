@@ -13,149 +13,135 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// Types
-interface Restaurant {
-  id: number;
-  name: string;
-  cusine_type: string;
-  location: string;
-  rating: number;
-  price_range: string;
-  available_slots: number;
-  created_at: string;
-}
-
-interface Customer {
-  customerid: number;
-  full_name: string;
-  address: string;
-  photo: string;
-  dob: string;
-}
+// Type for dynamic rows
+type Row = Record<string, any>;
 
 const DashboardPage = () => {
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [tables, setTables] = useState<string[]>([
+    "restaurants",
+    "artists",
+    "bookings",
+    "books",
+    "creative_works",
+    "invoices",
+    "newsletter_subscriptions",
+    "order_items",
+    "orders",
+    "payments",
+    "playlist_items",
+    "playlits",
+    "refund_requests",
+    "refunds",
+    "refunds",
+    "resturants",
+    "reviews",
+    "songs",
+    "tickets",
+    "users"
 
+    // add more table names or fetch dynamically
+  ]);
+  const [activeTable, setActiveTable] = useState<string | null>(null);
+  const [columns, setColumns] = useState<string[]>([]);
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Load data when table changes
   useEffect(() => {
+    if (!activeTable) return;
     const fetchData = async () => {
       setLoading(true);
-      const { data: restaurantData , error} = await supabase
-        .from("restaurants")
-        .select("*");
-      console.log(error)
-      const { data: customerData } = await supabase.from("customer").select("*");
-      console.log(restaurantData)
-      console.log(customerData)
-      if (restaurantData) setRestaurants(restaurantData);
-      if (customerData) setCustomers(customerData);
+      const { data, error } = await supabase.from(activeTable).select("*");
+      if (error) {
+        console.error("Error fetching:", error);
+        setRows([]);
+        setColumns([]);
+      } else if (data && data.length > 0) {
+        setRows(data);
+        setColumns(Object.keys(data[0]));
+      } else {
+        setRows([]);
+        setColumns([]);
+      }
       setLoading(false);
     };
     fetchData();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-950 text-gray-100">
-        <Loader2 className="h-10 w-10 animate-spin text-blue-400" />
-      </div>
-    );
-  }
+  }, [activeTable]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-purple-900 to-violet-950 text-gray-100">
-      <AnimatedBackground/>
-  <Navigation />
-    <div className="min-h-screen bg-gradient-to-b from-indigo-950 via-purple-900 to-violet-950 text-gray-100 p-8">
-      <h1 className="text-3xl font-extrabold text-center mb-8">
-        📊 Dashboard
-      </h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-gray-100">
+      <AnimatedBackground />
+      <Navigation />
+      <div className="p-8">
+        <h1 className="text-3xl font-extrabold text-center mb-8">
+          📊 Dashboard
+        </h1>
 
-      {/* Two-column grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Restaurants Table */}
-        <Card className="shadow-2xl rounded-2xl border border-indigo-950 bg-purple-900">
-          <CardContent>
-            <h2 className="text-xl font-bold mb-4 text-blue-400">
-              🍽️ Restaurants
-            </h2>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-800">
-                  <TableHead>ID</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Cuisine</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Slots</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {restaurants.map((r) => (
-                  <TableRow
-                    key={r.id}
-                    className="hover:bg-gray-800 transition"
-                  >
-                    <TableCell>{r.id}</TableCell>
-                    <TableCell>{r.name}</TableCell>
-                    <TableCell>{r.cusine_type}</TableCell>
-                    <TableCell>{r.location}</TableCell>
-                    <TableCell>{r.rating}</TableCell>
-                    <TableCell>{r.price_range}</TableCell>
-                    <TableCell>{r.available_slots}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        {/* Table Name List */}
+        <div className="flex flex-wrap justify-center gap-4 mb-8">
+          {tables.map((t) => (
+            <button
+              key={t}
+              onClick={() => setActiveTable(t)}
+              className={`px-4 py-2 rounded-xl font-bold transition shadow-md 
+                ${
+                  activeTable === t
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
 
-        {/* Customers Table */}
-        <Card className="shadow-2xl rounded-2xl border border-indigo-950 bg-purple-900">
-          <CardContent>
-            <h2 className="text-xl font-bold mb-4 text-green-400">
-              👤 Customers
-            </h2>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-800">
-                  <TableHead>ID</TableHead>
-                  <TableHead>Photo</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead>DOB</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {customers.map((c) => (
-                  <TableRow
-                    key={c.customerid}
-                    className="hover:bg-gray-800 transition"
-                  >
-                    <TableCell>{c.customerid}</TableCell>
-                    <TableCell>
-                      <img
-                        src={c.photo}
-                        alt={c.full_name}
-                        className="h-10 w-10 rounded-full object-cover border border-gray-700"
-                      />
-                    </TableCell>
-                    <TableCell>{c.full_name}</TableCell>
-                    <TableCell>{c.address}</TableCell>
-                    <TableCell>
-                      {new Date(c.dob).toLocaleDateString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        {/* Table Viewer */}
+        {activeTable && (
+          <Card className="shadow-2xl rounded-2xl border border-indigo-950 bg-purple-900">
+            <CardContent>
+              <h2 className="text-xl font-bold mb-4 text-blue-400">
+                📂 {activeTable}
+              </h2>
+
+              {loading ? (
+                <div className="flex justify-center items-center h-40">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+                </div>
+              ) : rows.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-800">
+                      {columns.map((col) => (
+                        <TableHead key={col}>{col}</TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((row, i) => (
+                      <TableRow
+                        key={i}
+                        className="hover:bg-gray-800 transition"
+                      >
+                        {columns.map((col) => (
+                          <TableCell key={col}>
+                            {typeof row[col] === "string" ||
+                            typeof row[col] === "number"
+                              ? row[col]
+                              : JSON.stringify(row[col])}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-gray-400">No data found</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
-</div>
   );
 };
 

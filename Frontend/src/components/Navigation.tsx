@@ -1,18 +1,51 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { MessageCircle, Calendar, User, LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
+import supabase from "../config/supabaseClient";
 
 const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const navItems = [
+  const [privilege, setPrivilege] = useState(false);
+  const [navItems, setNavItems] = useState([
     { path: "/chat", label: "Chat", icon: MessageCircle },
     { path: "/profile", label: "Profile", icon: User },
-    { path: "/dashboard", label: "Dashboard", icon: Calendar },
-  ];
+  ]);
 
-  const handleLogout = () => navigate("/");
+  useEffect(() => {
+    const fetchPrivilege = async () => {
+      const id = localStorage.getItem("user_id");
+      const { data, error } = await supabase
+        .from("users")
+        .select("privilege")
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      const privilege = data.privilege; // normalize string
+
+      if (privilege === true) {
+        setPrivilege(true);
+        setNavItems([
+          { path: "/chat", label: "Chat", icon: MessageCircle },
+          { path: "/profile", label: "Profile", icon: User },
+          { path: "/dashboard", label: "Dashboard", icon: Calendar },
+        ]);
+      }
+    };
+
+    fetchPrivilege();
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user_id"); // clear session
+    navigate("/");
+  };
 
   return (
     <nav className="bg-gradient-to-r from-gray-950 via-gray-900 to-black border-b border-white/20 px-4 py-3 shadow-lg">
