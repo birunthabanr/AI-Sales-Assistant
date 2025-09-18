@@ -163,6 +163,7 @@ def book_restaurant(user_id: str, restaurant_name: str, date: str, time: str, pa
 @mcp.tool()
 def get_weather(location: str, date: str = "") -> str:
     """Get weather information for a location"""
+    print("Weather tool call")
     try:
         if date:
             return f"Weather forecast for {location} on {date}: Partly cloudy, 22°C, 10% chance of rain"
