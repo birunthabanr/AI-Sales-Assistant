@@ -30,3 +30,10 @@ Backend/MCP/snips_model/
 Backend/MCP/snips_model/model.safetensors
 Backend/MCP/snips_model/model.safetensors
 Backend/MCP/snips_model/model.safetensors
+
+label_encoder.pkl
+distilbert-dstc8-intent/tokenizer_config.json
+distilbert-dstc8-intent/special_tokens_map.json
+distilbert-dstc8-intent/config.json
+distilbert-dstc8-intent/model.safetensors
+distilbert-dstc8-intent/vocab.txt
