@@ -9,6 +9,7 @@ from fastmcp import FastMCP
 import uuid
 from datetime import datetime, timedelta
 import requests
+import dateparser
 
 # Load environment variables
 load_dotenv()
@@ -156,7 +157,7 @@ def rate_book(
 
 @mcp.tool()
 def book_restaurant(
-    restaurant: str,
+    name: str,
     time: str,
     party_size: int
 ) -> str:
@@ -169,9 +170,9 @@ def book_restaurant(
         booking_time_str = parsed.strftime("%Y-%m-%d %H:%M:%S")
         booking_id = str(uuid.uuid4())
 
-        restaurant_result = supabase.table("restaurants").select("id, name").ilike("name", f"%{restaurant}%").execute()
+        restaurant_result = supabase.table("restaurants").select("id, name").ilike("name", f"%{name}%").execute()
         if not restaurant_result.data:
-            return f"❌ Restaurant '{restaurant}' not found."
+            return f"❌ Restaurant '{name}' not found."
 
         restaurant_id = restaurant_result.data[0]["id"]
         insert_result = supabase.table("bookings").insert({
@@ -182,9 +183,9 @@ def book_restaurant(
         }).execute()
 
         if insert_result.data:
-            return f"✅ Booking confirmed at '{restaurant}' for {party_size} people on {booking_time_str}."
+            return f"✅ Booking confirmed at '{name}' for {party_size} people on {booking_time_str}."
         else:
-            return f"⚠️ Could not save booking for '{restaurant}'."
+            return f"⚠️ Could not save booking for '{name}'."
 
     except Exception as e:
         return f"❌ Error booking restaurant: {str(e)}"
