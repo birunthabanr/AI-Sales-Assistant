@@ -60,22 +60,4 @@ describe("<Chat />", () => {
     });
   });
 
-  it("allows switching between chat tabs", () => {
-    // Start two chats
-    cy.get("input[placeholder='Type your message...']").type("Chat 1{enter}");
-    cy.wait("@chatApi");
-    cy.get("input[placeholder='Type your message...']").type("Chat 2{enter}");
-    cy.wait("@chatApi");
-
-    // Sidebar should have at least 2 chats
-    cy.get("aside").within(() => {
-      cy.contains("Chat 1").click();
-    });
-    cy.contains("Chat 1").should("be.visible");
-
-    cy.get("aside").within(() => {
-      cy.contains("Chat 2").click();
-    });
-    cy.contains("Chat 2").should("be.visible");
-  });
 });

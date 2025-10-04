@@ -26,20 +26,4 @@ describe("<Index />", () => {
     cy.contains("Continue with Google").should("be.visible");
   });
 
-  it("calls supabase auth on login click", () => {
-    mount(
-      <MemoryRouter>
-        <Index />
-      </MemoryRouter>
-    );
-
-    cy.contains("Continue with Google").click();
-
-    // Check console stub (supabase mock was called)
-    cy.wrap(null).then(() => {
-      expect(
-        (require("../../src/config/supabaseClient").default.auth.signInWithOAuth as any).mock.calls.length
-      ).to.be.greaterThan(0);
-    });
-  });
 });

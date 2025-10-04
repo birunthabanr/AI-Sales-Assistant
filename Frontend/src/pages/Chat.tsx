@@ -191,6 +191,7 @@ const Chat = () => {
 
       <div className="flex flex-1">
         <Sidebar
+          data-testid="chat-sidebar"
           chats={chatTabs}
           activeChatId={activeChatId}
           send_id_to_chat={(id) => {

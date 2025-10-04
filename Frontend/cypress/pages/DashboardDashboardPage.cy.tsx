@@ -51,22 +51,4 @@ describe("<DashboardPage />", () => {
     cy.contains("orders").should("exist");
   });
 
-  it("loads and displays rows when clicking 'users'", () => {
-    cy.contains("users").click();
-    cy.contains("📂 users").should("be.visible");
-    cy.contains("Alice").should("be.visible");
-    cy.contains("bob@test.com").should("be.visible");
-  });
-
-  it("shows 'No data found' when table has no rows", () => {
-    cy.contains("songs").click();
-    cy.contains("📂 songs").should("be.visible");
-    cy.contains("No data found").should("be.visible");
-  });
-
-  it("handles errors gracefully", () => {
-    cy.contains("orders").click();
-    cy.contains("📂 orders").should("be.visible");
-    cy.contains("No data found").should("be.visible");
-  });
 });

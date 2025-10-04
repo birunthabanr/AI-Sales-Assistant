@@ -25,7 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   activeChatId,
   send_id_to_chat,
 }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   return (
     <div
@@ -39,6 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <button
           onClick={() => setOpen(!open)}
           className="p-1.5 rounded-md hover:bg-gray-800"
+          aria-label="Toggle sidebar"
         >
           {open ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
         </button>

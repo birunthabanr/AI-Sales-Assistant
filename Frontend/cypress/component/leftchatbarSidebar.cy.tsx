@@ -18,7 +18,7 @@ describe("<Sidebar />", () => {
     );
 
     // Select sidebar root div using both classes
-    cy.get("div.flex.flex-col").should("have.class", "w-16");
+    cy.get("div.flex.flex-col").should("have.class", "w-64");
   });
 
   it("toggles open and close", () => {
@@ -30,17 +30,15 @@ describe("<Sidebar />", () => {
     );
 
     // Find the toggle button by its text content (usually > or <)
-    cy.get("button")
-      .contains(/^>$/) // Adjust if your toggle button shows ">" when closed
-      .click();
+    cy.get("button[aria-label='Toggle sidebar']").click();
+
+    cy.get("div.flex.flex-col").should("have.class", "w-16");
+
+    cy.get("button[aria-label='Toggle sidebar']").click();
 
     cy.get("div.flex.flex-col").should("have.class", "w-64");
 
-    cy.get("button")
-      .contains(/^<$/) // Adjust if your toggle button shows "<" when open
-      .click();
-
-    cy.get("div.flex.flex-col").should("have.class", "w-16");
+    
   });
 
   it("clicking New Chat calls send_id_to_chat(0)", () => {

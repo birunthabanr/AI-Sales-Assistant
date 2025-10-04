@@ -15,6 +15,9 @@ Frontend/node_modules/
 Data/filtered_dialogues.json
 .env
 Frontend/node_modules/
+node_modules
+
+
 
 # Ignore fine-tuned model folder
 Intent Classifier/distilbert-dstc8-intent/
