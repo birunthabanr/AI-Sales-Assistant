@@ -689,4 +689,5 @@ def transfer_to_human_agent(context: str, priority: str = "normal") -> str:
 # Run MCP Server
 # =====================================================
 if __name__ == "__main__":
-    mcp.run(transport="sse", host="127.0.0.1", port=0)
+    print("🚀 MCP server starting on http://127.0.0.1:8081/sse", flush=True)
+    mcp.run(transport="sse", host="127.0.0.1", port=8081)
