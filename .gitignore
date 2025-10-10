@@ -10,6 +10,9 @@ notebooks/DSTC8/mlruns/
 notebooks/DSTC8/results/
 Data/filtered_dialogues.json
 Frontend/node_modules/
+Backend/.pytest_cache
+Backend/MCP/__pycache__
+node_modules
 
 .DS_Store
 Data/filtered_dialogues.json
