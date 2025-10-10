@@ -47,7 +47,7 @@ const Chat = () => {
       .select("chat_logs")
       .eq("id", userid)
       .single(); // ✅ ensure only one row is returned
-
+      // console.log(data)
     if (error) {
       console.error("Error fetching chats:", error);
       return;
@@ -61,7 +61,7 @@ const Chat = () => {
           timestamp: new Date(msg.timestamp),
         })),
       }));
-
+      // console.log(data)
       setChatTabs(formatted);
       localStorage.setItem("chats", JSON.stringify(formatted));
     }
@@ -81,21 +81,14 @@ const Chat = () => {
 
   const sendMessageToBackend = async (userMessage: string): Promise<string> => {
     try {
-      const response = await fetch("http://localhost:3000/chat", {
+      const response = await fetch("http://localhost:5000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: userMessage }),
       });
 
-      if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("Backend error:", errorData);
-      return errorData.error || `HTTP error: ${response.status}`;
-      }
-
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
       const data = await response.json();
-      console.log("Backend response:", data);
-
 
       if (data.action === "chat") return data.result;
       if (typeof data.result === "object")
@@ -108,8 +101,9 @@ const Chat = () => {
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !activeChatId) return;
+    if (!newMessage.trim()) return;
 
+    // 1️⃣ Create user message
     const userMessage: Message = {
       id: Date.now(),
       text: newMessage,
@@ -117,14 +111,16 @@ const Chat = () => {
       timestamp: new Date(),
     };
 
-    const updated = [...messages, userMessage];
-    setMessages(updated);
+    // 2️⃣ Immediately add user message to state
+    setMessages((prev) => [...prev, userMessage]);
     setNewMessage("");
     setIsLoading(true);
 
     try {
+      // 3️⃣ Send message to backend
       const botResponse = await sendMessageToBackend(newMessage);
 
+      // 4️⃣ Create bot message
       const botMessage: Message = {
         id: Date.now() + 1,
         text: botResponse,
@@ -132,39 +128,64 @@ const Chat = () => {
         timestamp: new Date(),
       };
 
-      const finalMessages = [...updated, botMessage];
-      setMessages(finalMessages);
+      // 5️⃣ Determine if new tab or existing
+      let newTabs: ChatTab[] = [...chatTabs];
 
-      // ✅ Update Supabase
-      const { error } = await supabase
-        .from("chat_log")
-        .update({
-          content: finalMessages.map((m) => ({
-            ...m,
-            timestamp: m.timestamp.toISOString(),
-          })),
-        })
-        .eq("id", activeChatId);
+      if (activeChatId && activeChatId !== 0) {
+        // Update existing tab
+        newTabs = newTabs.map((tab) =>
+          tab.id === activeChatId
+            ? { ...tab, content: [...tab.content, userMessage, botMessage] }
+            : tab
+        );
+      } else {
+        // Create new tab
+        const newTab: ChatTab = {
+          id: Date.now(),
+          tab: `Chat ${newTabs.length + 1}`,
+          content: [userMessage, botMessage],
+        };
+        newTabs.push(newTab);
+        setActiveChatId(newTab.id);
+      }
 
-      if (error) console.error("Error updating Supabase:", error);
-
-      // ✅ Update local state + localStorage
-      const newTabs = chatTabs.map((tab) =>
-        tab.id === activeChatId ? { ...tab, content: finalMessages } : tab
-      );
+      // 6️⃣ Update state with bot message
+      setMessages((prev) => [...prev, botMessage]);
       setChatTabs(newTabs);
       localStorage.setItem("chats", JSON.stringify(newTabs));
+
+      // 7️⃣ Convert timestamps for Supabase
+      const processedTabs = newTabs.map((tab) => ({
+        ...tab,
+        content: tab.content.map((m) => ({
+          ...m,
+          timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : m.timestamp,
+        })),
+      }));
+
+      const { data, error } = await supabase
+        .from("users")
+        .update({ chat_logs: processedTabs })
+        .eq("id", userid)
+        .select();
+
+      if (error) console.error("Error updating Supabase:", error);
+      else console.log("✅ Updated chat logs:", data);
+    } catch (error) {
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
+
+
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !isLoading) sendMessage();
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-indigo-950 via-purple-900 to-violet-950 text-gray-100">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-gray-100">
       <AnimatedBackground />
       <Navigation />
 
@@ -180,100 +201,103 @@ const Chat = () => {
         />
 
         {/* Chat Area */}
-        <div className="max-w-4xl mx-auto p-4 flex-1 flex flex-col">
-          <Card className="h-[calc(95vh-8rem)] bg-gray-900/40 backdrop-blur-xl border border-indigo-500/30 shadow-2xl shadow-purple-500/10 rounded-2xl overflow-hidden flex flex-col">
-            <CardHeader className="bg-gradient-to-r from-indigo-600 to-violet-600 border-b border-indigo-400/30">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-white/10 rounded-full">
-                  <Sparkles className="h-6 w-6 text-amber-300" />
+        <div className="max-w-3xl mx-auto p-4 flex-1 flex flex-col">
+           
+            <Card className="h-[calc(95vh-8rem)] bg-gray-900/40 backdrop-blur-xl border border-indigo-500/30 shadow-2xl shadow-purple-500/10 rounded-2xl overflow-hidden flex flex-col">
+              <CardHeader className="bg-gradient-to-r from-indigo-600 to-violet-600 border-b border-indigo-400/30">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-white/10 rounded-full">
+                    <Sparkles className="h-6 w-6 text-amber-300" />
+                  </div>
+                  <CardTitle className="text-xl font-bold text-white">
+                    AI Assistant
+                  </CardTitle>
                 </div>
-                <CardTitle className="text-xl font-bold text-white">
-                  AI Assistant
-                </CardTitle>
-              </div>
-              <p className="text-sm text-indigo-100/80 mt-1">
-                Ask me anything, I&apos;m here to help!
-              </p>
-            </CardHeader>
+                <p className="text-sm text-indigo-100/80 mt-1">
+                  Ask me anything, I&apos;m here to help!
+                </p>
+              </CardHeader>
 
-            <CardContent className="flex flex-col h-full p-0">
-              <ScrollArea className="flex-1 p-6 custom-scrollbar">
-                <div className="space-y-6">
-                  {messages.length === 0 && (
-                    <div className="text-center py-12">
-                      <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 mb-6">
-                        <Bot className="h-12 w-12 text-purple-400" />
-                      </div>
-                      <h3 className="text-xl font-medium text-gray-200 mb-2">
-                        Start a conversation
-                      </h3>
-                      <p className="text-gray-400 max-w-md mx-auto">
-                        Ask me anything and I&apos;ll do my best to assist you.
-                      </p>
-                    </div>
-                  )}
-
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex items-start space-x-3 ${
-                        message.sender === "user"
-                          ? "justify-end"
-                          : "justify-start"
-                      }`}
-                    >
-                      {message.sender !== "user" && (
-                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-                          <Bot className="h-5 w-5 text-white" />
+              <CardContent className="flex flex-col h-full p-0">
+                <ScrollArea className="flex-1 p-6 pb-28 custom-scrollbar">
+                  <div className="space-y-6">
+                    {messages.length === 0 && (
+                      <div className="text-center py-12">
+                        <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 mb-6">
+                          <Bot className="h-12 w-12 text-purple-400" />
                         </div>
-                      )}
-                      <div
-                        className={`relative max-w-[75%] rounded-2xl px-4 py-3 ${
-                          message.sender === "user"
-                            ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white"
-                            : "bg-gradient-to-r from-slate-800 to-gray-800 text-white border border-gray-700"
-                        }`}
-                      >
-                        <p className="whitespace-pre-wrap">{message.text}</p>
-                        <p className="text-xs opacity-70 mt-2 text-right">
-                          {message.timestamp.toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                        <h3 className="text-xl font-medium text-gray-200 mb-2">
+                          Start a conversation
+                        </h3>
+                        <p className="text-gray-400 max-w-md mx-auto">
+                          Ask me anything and I&apos;ll do my best to assist you.
                         </p>
                       </div>
-                      {message.sender === "user" && (
-                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center">
-                          <User className="h-5 w-5 text-white" />
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    )}
 
-                  {isLoading && (
-                    <div className="flex items-start space-x-3 animate-pulse">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-                        <Bot className="h-5 w-5 text-white" />
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex items-start space-x-3 ${
+                          message.sender === "user"
+                            ? "justify-end"
+                            : "justify-start"
+                        }`}
+                      >
+                        {message.sender !== "user" && (
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                            <Bot className="h-5 w-5 text-white" />
+                          </div>
+                        )}
+                        <div
+                          className={`relative max-w-[75%] rounded-2xl px-4 py-3 ${
+                            message.sender === "user"
+                              ? "bg-gradient-to-r from-slate-800 to-gray-800 text-white"
+                              : "bg-gradient-to-r from-slate-800 to-gray-800 text-white border border-gray-700"
+                          }`}
+                        >
+                          <p className="whitespace-pre-wrap">{message.text}</p>
+                          <p className="text-xs opacity-70 mt-2 text-right">
+                            {message.timestamp.toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                        {message.sender === "user" && (
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center">
+                            <User className="h-5 w-5 text-white" />
+                          </div>
+                        )}
                       </div>
-                      <div className="max-w-[50%] rounded-2xl px-4 py-3 bg-gray-800">
-                        <div className="flex space-x-1.5">
-                          <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" />
-                          <div
-                            className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"
-                            style={{ animationDelay: "150ms" }}
-                          />
-                          <div
-                            className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"
-                            style={{ animationDelay: "300ms" }}
-                          />
+                    ))}
+
+                    {isLoading && (
+                      <div className="{activeChatId != 0:pt-30 ,flex items-start space-x-3 animate-pulse }">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                          <Bot className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="max-w-[50%] rounded-2xl px-4 py-3 bg-gray-800">
+                          <div className="flex space-x-1.5">
+                            <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" />
+                            <div
+                              className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"
+                              style={{ animationDelay: "150ms" }}
+                            />
+                            <div
+                              className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"
+                              style={{ animationDelay: "300ms" }}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          
+          
 
           {/* Input */}
           <div className="border-t border-gray-700/50 p-4 bg-gradient-to-r from-gray-900/70 to-gray-800/70">

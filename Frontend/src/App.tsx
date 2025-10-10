@@ -7,7 +7,6 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Chat from "./pages/Chat";
-import CalendarPage from "./pages/CalendarPage";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import DashBoard from "./pages/Dashboard"
