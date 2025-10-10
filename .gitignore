@@ -10,6 +10,7 @@ notebooks/DSTC8/mlruns/
 notebooks/DSTC8/results/
 Data/filtered_dialogues.json
 Frontend/node_modules/
+node_modules
 
 .DS_Store
 Data/filtered_dialogues.json
