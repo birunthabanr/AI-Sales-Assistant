@@ -20,7 +20,7 @@ app.add_middleware(
 
 # Config
 OLLAMA_API = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "deepseek-r1:7b"
+OLLAMA_MODEL = "llama3"
 FASTMCP_SERVER_URL = "http://localhost:8000/sse"
 
 
