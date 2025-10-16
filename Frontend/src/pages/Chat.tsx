@@ -44,17 +44,18 @@ const Chat = () => {
   const fetchChats = async () => {
     const { data, error } = await supabase
       .from("users")
-      .select("chat_logs")
-      .eq("id", userid)
+      .select("chat")
+      .eq("user_id", userid)
       .single(); // ✅ ensure only one row is returned
       // console.log(data)
+    console.log("This is a fetch data:", data)
     if (error) {
       console.error("Error fetching chats:", error);
       return;
     }
 
-    if (data?.chat_logs) {
-      const formatted = data.chat_logs.map((chat: ChatTab) => ({
+    if (data?.chat) {
+      const formatted = data.chat.map((chat: ChatTab) => ({
         ...chat,
         content: chat.content.map((msg: Message) => ({
           ...msg,
@@ -81,7 +82,7 @@ const Chat = () => {
 
   const sendMessageToBackend = async (userMessage: string): Promise<string> => {
     try {
-      const response = await fetch("http://localhost:5000/chat", {
+      const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: userMessage }),
@@ -165,8 +166,8 @@ const Chat = () => {
 
       const { data, error } = await supabase
         .from("users")
-        .update({ chat_logs: processedTabs })
-        .eq("id", userid)
+        .update({ chat: processedTabs })
+        .eq("user_id", userid)
         .select();
 
       if (error) console.error("Error updating Supabase:", error);

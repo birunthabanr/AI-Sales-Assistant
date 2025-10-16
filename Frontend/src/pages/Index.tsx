@@ -3,10 +3,13 @@ import { useNavigate } from "react-router-dom";
 import supabase from "../config/supabaseClient";
 import { useAuthListener } from "./useAuth";
 import AnimatedBackground from "@/components/AnimationBackground";
+import { useEffect, useState } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
   const { session } = useAuthListener();
+
+
 
   // ✅ Google OAuth Login
   const handleGoogleLogin = async () => {

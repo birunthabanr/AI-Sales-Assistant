@@ -18,8 +18,8 @@ const Navigation = () => {
       const id = localStorage.getItem("user_id");
       const { data, error } = await supabase
         .from("users")
-        .select("privilege")
-        .eq("id", id)
+        .select("is_admin")
+        .eq("user_id", id)
         .single();
 
       if (error) {
