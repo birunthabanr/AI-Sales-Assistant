@@ -6,8 +6,9 @@ export const useAuthListener = () => {
 
   useEffect(() => {
     // Get initial session
+    setSession(null);
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log(session)
+      console.log("this is a session: ",session)
       setSession(session);
     });
 
@@ -23,6 +24,7 @@ export const useAuthListener = () => {
         }
 
         if (event === "SIGNED_OUT") {
+          await supabase.auth.signOut();
           localStorage.removeItem("user_id");
         }
       }
@@ -37,8 +39,8 @@ export const useAuthListener = () => {
 export const createUserIfNotExists = async (user: any) => {
   const { data: existingUser, error: selectError } = await supabase
     .from("users")
-    .select("id")
-    .eq("id", user.id)
+    .select("user_id")
+    .eq("user_id", user.id)
     .maybeSingle(); // better than single()
 
   if (selectError) {
@@ -48,9 +50,10 @@ export const createUserIfNotExists = async (user: any) => {
 
   if (!existingUser) {
     const { error: insertError } = await supabase.from("users").insert({
-      id: user.id,
-      name: user.user_metadata?.full_name || "",
+      user_id: user.id,
+      full_name: user.user_metadata?.full_name || "",
       email: user.email,
+      account_id:"ACC1254",
       chat: [],
     });
 
