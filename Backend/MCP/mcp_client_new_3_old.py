@@ -79,31 +79,32 @@ async def query_llm_for_intent(user_prompt: str, available_tools: list):
     tool_descriptions = "\n".join([f"- {tool.name}: {tool.description}" for tool in available_tools])
 
     system_prompt = f"""
-You are an intent parser for a hotel booking assistant using MCP tools.
+You are an intent parser for a multidomain customer assistant using MCP tools.
+
+The assistant supports multiple domains such as customer support, sales, billing, technical support, account management, product information, returns/exchanges, and scheduling.
 
 Available MCP tools:
 {tool_descriptions}
 
 User request: "{user_prompt}"
 
-Respond ONLY in JSON with this format:
+Respond ONLY in JSON with this exact format:
 {{
   "tool_name": "TOOL_NAME" | "chat",
-  "arguments": {{
-    // tool-specific arguments based on the tool's schema
-  }}
+  "arguments": {{}}
 }}
 
 Rules:
-- Choose the most appropriate MCP tool from: {', '.join(tool_names)}
-- Use "chat" if no MCP tool is needed for a general conversation
-- Always return valid JSON. Do not add extra text.
-- Match arguments to the specific tool's expected parameters
-- Respond ONLY in STRICT JSON (RFC 8259).
-- Do NOT include comments like // or extra text.
-- Use null (without quotes) for missing values, not "null".
-- Always return valid JSON that can be parsed by json.loads in Python.
+- Choose a single MCP tool from: {', '.join(tool_names)}
+- Use "chat" when a general conversational reply or a clarifying question is needed.
+- Return strictly valid JSON (RFC 8259) with no extra text before or after.
+- Do NOT include comments, explanatory text, or trailing commas.
+- Use null (without quotes) for missing values.
+- Match argument names and expected types to the tool's schema; if unsure, include fields with null.
+- If multiple intents or domains are present, pick the primary intent/tool; if required information is missing, prefer "chat" to request clarification.
+- Keep the "arguments" object minimal and relevant.
 
+Always ensure the output can be parsed by json.loads in Python.
 """
 
     raw = await _ollama_stream(system_prompt)
