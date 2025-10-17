@@ -108,11 +108,9 @@ Always ensure the output can be parsed by json.loads in Python.
 """
 
     raw = await _ollama_stream(system_prompt)
-    # print(f"🔎 Raw LLM intent output:\n{raw}\n")   # DEBUG: raw LLM output
-
     parsed = await extract_json(raw)
     if not parsed:
-        print("⚠️ Failed to parse JSON intent, defaulting to chat\n")  # DEBUG
+        print("⚠️ Failed to parse JSON intent, defaulting to chat\n")
         parsed = {"tool_name": "chat", "arguments": {}}
     return parsed
 
@@ -145,14 +143,13 @@ Now, write a clear, concise answer to the user based on the tool result.
 If the tool result is a list or JSON, summarize it helpfully.
 If next steps are obvious (e.g., ask for missing fields), mention them briefly.
 """
-    print(f"🔄 Sending followup prompt to LLM:\n{followup_prompt}\n")  # DEBUG
-    return _ollama_stream(followup_prompt)
+    return await _ollama_stream(followup_prompt)
+
 
 @app.post("/chat")
 async def run_client(request: Request):
     body = await request.json()
     user_prompt = body.get("prompt", "").strip()
-    print(f"user messege {user_prompt}")
 
     if not user_prompt:
         return JSONResponse({"action": "chat", "result": "⚠️ Empty message"})
@@ -161,72 +158,39 @@ async def run_client(request: Request):
         client = Client(FASTMCP_SERVER_URL)
 
         async with client:
-            print("✅ Connected to FastMCP server!")
             tools = await client.list_tools()
             available_tools = tools if tools else []
 
-            print(f"Found {len(available_tools)} tools:")
-            for tool in available_tools:
-                print(f"  - {tool.name}: {tool.description}")
-
             while True:
-                user_prompt = input("\nYou: ")
-                if user_prompt.lower() in ["quit", "exit"]:
-                    break
-
                 # 1) Ask LLM for intent
                 intent = await query_llm_for_intent(user_prompt, available_tools)
-                print(f"📦 Parsed intent: {intent}\n")   # DEBUG
 
                 tool_name = intent.get("tool_name", "chat")
                 arguments = intent.get("arguments", {}) or {}
 
                 # 2) Normal chat if no tool
                 if tool_name == "chat" or not available_tools:
-                    print("💬 Falling back to direct chat\n")   # DEBUG
                     reply = await chat_with_llm(user_prompt)
-                    print(f"🤖 LLM: {reply}")
                     return JSONResponse({"action": "chat", "result": reply})
-                    
 
                 # 3) Tool call path
                 tool_exists = any(tool.name.lower() == tool_name.lower() for tool in available_tools)
                 if not tool_exists:
-                    print(f"⚠️ Tool '{tool_name}' not found. Available: {[t.name for t in available_tools]}\n")
                     reply = await chat_with_llm(user_prompt)
-                    print(f"🤖 LLM (fallback): {reply}")
                     return JSONResponse({"action": "chat", "result": reply})
-                    
 
-                print(f"🔧 Calling MCP tool: {tool_name} with args: {arguments}\n")
                 try:
                     result = await client.call_tool(tool_name, arguments)
                     tool_result_text = await _stringify_tool_result(result)
-                    # Show raw tool result
-                    if hasattr(result, "text"):
-                        print(f"📋 Raw MCP Result.text: {result.text}\n")
-                    elif hasattr(result, "content"):
-                        print(f"📋 Raw MCP Result.content: {result.content}\n")
-                    else:
-                        print(f"📋 Raw MCP Result: {result}\n")
-                    
+
                     reply = await llm_followup(user_prompt, tool_name, arguments, tool_result_text)
                     return JSONResponse({"action": tool_name, "result": reply})
 
-                    # Feed back into LLM for natural reply
-
                 except Exception as e:
-                    print(f"❌ Error calling MCP tool: {e}\n")
                     reply = await chat_with_llm(user_prompt)
-                    print(f"🤖 LLM (fallback): {reply}")
                     return JSONResponse({"action": "chat", "result": reply})
 
     except Exception as e:
-        print(f"❌ Failed to connect to FastMCP server: {e}\n")
-        print("Troubleshooting steps:")
-        print("1. Make sure your server is running")
-        print(f"2. Check that your server is accessible at: {FASTMCP_SERVER_URL}")
-        print("3. Verify your server starts without errors")
         return JSONResponse({
             "action": "error",
             "result": f"❌ Failed to connect to FastMCP server: {e}"
@@ -234,5 +198,5 @@ async def run_client(request: Request):
 
 
 if __name__ == "__main__":
-    asyncio.run(run_client())
- 
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=5000)
