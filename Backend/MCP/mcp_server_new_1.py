@@ -59,6 +59,7 @@ def play_music(
                     query = query.eq("artist_id", artist_id)
 
             song_result = query.execute()
+            print(song_result)
             if song_result.data:
                 song_data = song_result.data[0]
                 artist_result = supabase.table("artists").select("name").eq("id", song_data["artist_id"]).execute()
@@ -157,11 +158,11 @@ def rate_book(
 
 @mcp.tool()
 def book_restaurant(
-    restaurant: str,
+    restaurant_name: str,
     time: str,
     party_size: int
 ) -> str:
-    """Book a restaurant by name, time, and party size."""
+    """Book a restaurant by restaurant_name, time, and party size."""
     try:
         parsed = dateparser.parse(time)
         if not parsed:
@@ -170,9 +171,9 @@ def book_restaurant(
         booking_time_str = parsed.strftime("%Y-%m-%d %H:%M:%S")
         booking_id = str(uuid.uuid4())
 
-        restaurant_result = supabase.table("restaurants").select("id, name").ilike("name", f"%{restaurant}%").execute()
+        restaurant_result = supabase.table("restaurants").select("id, name").ilike("name", f"%{restaurant_name}%").execute()
         if not restaurant_result.data:
-            return f"❌ Restaurant '{restaurant}' not found."
+            return f"❌ Restaurant '{restaurant_name}' not found."
 
         restaurant_id = restaurant_result.data[0]["id"]
         insert_result = supabase.table("bookings").insert({
@@ -183,9 +184,9 @@ def book_restaurant(
         }).execute()
 
         if insert_result.data:
-            return f"✅ Booking confirmed at '{restaurant}' for {party_size} people on {booking_time_str}."
+            return f"✅ Booking confirmed at '{restaurant_name}' for {party_size} people on {booking_time_str}."
         else:
-            return f"⚠️ Could not save booking for '{restaurant}'."
+            return f"⚠️ Could not save booking for '{restaurant_name}'."
 
     except Exception as e:
         return f"❌ Error booking restaurant: {str(e)}"
@@ -288,7 +289,7 @@ def edit_account(account_id: str, email: str = "", full_name: str = "", phone: s
         if phone: update_data["phone"] = phone
         update_data["updated_at"] = datetime.now().isoformat()
         
-        result = supabase.table("users").update(update_data).eq("id", account_id).execute()
+        result = supabase.table("users").update(update_data).eq("account_id", account_id).execute()
         
         if result.data:
             return f"Account {account_id} updated successfully"
@@ -363,7 +364,7 @@ def track_order(order_id: str) -> str:
         return f"Mock: Order {order_id} is in transit. Tracking: TRK{hash(order_id) % 100000}. Expected delivery: 2-3 days"
     
     try:
-        result = supabase.table("orders").select("*").eq("id", order_id).execute()
+        result = supabase.table("orders").select("*").eq("order_id", order_id).execute()
         
         if result.data:
             order = result.data[0]
@@ -397,7 +398,7 @@ def cancel_order(order_id: str, reason: str = "") -> str:
     
     try:
         # Check if order can be cancelled
-        result = supabase.table("orders").select("*").eq("id", order_id).execute()
+        result = supabase.table("orders").select("*").eq("order_id", order_id).execute()
         
         if not result.data:
             return f"Order {order_id} not found"
@@ -413,7 +414,7 @@ def cancel_order(order_id: str, reason: str = "") -> str:
             "status": "cancelled",
             "cancellation_reason": reason,
             "cancelled_at": datetime.now().isoformat()
-        }).eq("id", order_id).execute()
+        }).eq("order_id", order_id).execute()
         
         return f"Order {order_id} has been cancelled successfully"
         
@@ -520,7 +521,7 @@ def get_refund(order_id: str, items: str = "", reason: str = "") -> str:
     
     try:
         # Check if order exists and is eligible for refund
-        order_result = supabase.table("orders").select("*").eq("id", order_id).execute()
+        order_result = supabase.table("orders").select("*").eq("order_id", order_id).execute()
         
         if not order_result.data:
             return f"Order {order_id} not found"
@@ -571,7 +572,7 @@ def track_refund(refund_id: str) -> str:
         return f"Mock: Refund {refund_id} is being processed. Status: In Progress. ETA: 3-5 business days"
     
     try:
-        result = supabase.table("refunds").select("*").eq("id", refund_id).execute()
+        result = supabase.table("refunds").select("*").eq("refund_id", refund_id).execute()
         
         if result.data:
             refund = result.data[0]
@@ -596,14 +597,13 @@ def track_refund(refund_id: str) -> str:
         return f"Error tracking refund: {str(e)}"
 
 @mcp.tool()
-def contact_customer_service(topic: str, preferred_channel: str = "email", customer_id: str = "", phone: str = "", email: str = "") -> str:
+def contact_customer_service(topic: str, preferred_channel: str = "email", phone: str = "", email: str = "") -> str:
     """
     Create a customer service request and schedule callback or response.
     
     Args:
         topic (str): Description of the issue or topic for customer service.
         preferred_channel (str): Preferred contact method - phone, email, or chat.
-        customer_id (str, optional): Customer ID for account lookup.
         phone (str, optional): Phone number for callback if preferred_channel is phone.
         email (str, optional): Email address for response if preferred_channel is email.
     
@@ -619,7 +619,7 @@ def contact_customer_service(topic: str, preferred_channel: str = "email", custo
     
     try:
         ticket_result = supabase.table("support_tickets").insert({
-            "customer_id": customer_id or "unknown",
+
             "topic": topic,
             "preferred_channel": preferred_channel,
             "contact_phone": phone,
@@ -628,7 +628,7 @@ def contact_customer_service(topic: str, preferred_channel: str = "email", custo
             "priority": "normal",
             "created_at": datetime.now().isoformat()
         }).execute()
-        
+    
         ticket_id = ticket_result.data[0]['id']
         
         eta_map = {
