@@ -3,14 +3,28 @@ import json
 import re
 import requests
 from fastmcp import Client
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
+
+app = FastAPI(title="Chat Backend")
+
+# Allow frontend (React) to call the backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # ⚠️ In production, replace with your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Config
 OLLAMA_API = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "deepseek-r1:7b"
+OLLAMA_MODEL = "llama3"
 FASTMCP_SERVER_URL = "http://localhost:8000/sse"
 
 
-def extract_json(text: str):
+async def extract_json(text: str):
     """Try to extract the first {...} JSON object from text."""
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if match:
@@ -21,7 +35,7 @@ def extract_json(text: str):
     return None
 
 
-def _ollama_stream(prompt: str) -> str:
+async def _ollama_stream(prompt: str) -> str:
     """
     Call Ollama /api/generate with streaming and return the concatenated response text.
     """
@@ -49,12 +63,12 @@ def _ollama_stream(prompt: str) -> str:
         return f"Error chatting with LLM: {e}"
 
 
-def chat_with_llm(user_prompt: str):
+async def chat_with_llm(user_prompt: str):
     """Simple chat with LLM without MCP tools."""
-    return _ollama_stream(user_prompt)
+    return await _ollama_stream(user_prompt)
 
 
-def query_llm_for_intent(user_prompt: str, available_tools: list):
+async def query_llm_for_intent(user_prompt: str, available_tools: list):
     """
     Ask LLM to pick a tool or 'chat'.
     """
@@ -92,17 +106,17 @@ Rules:
 
 """
 
-    raw = _ollama_stream(system_prompt)
+    raw = await _ollama_stream(system_prompt)
     # print(f"🔎 Raw LLM intent output:\n{raw}\n")   # DEBUG: raw LLM output
 
-    parsed = extract_json(raw)
+    parsed = await extract_json(raw)
     if not parsed:
         print("⚠️ Failed to parse JSON intent, defaulting to chat\n")  # DEBUG
         parsed = {"tool_name": "chat", "arguments": {}}
     return parsed
 
 
-def _stringify_tool_result(result) -> str:
+async def _stringify_tool_result(result) -> str:
     """Convert FastMCP tool call result to string for feeding back into LLM."""
     if hasattr(result, "text") and result.text:
         return str(result.text)
@@ -114,7 +128,7 @@ def _stringify_tool_result(result) -> str:
         return str(result)
 
 
-def llm_followup(user_prompt: str, tool_name: str, arguments: dict, tool_result_text: str) -> str:
+async def llm_followup(user_prompt: str, tool_name: str, arguments: dict, tool_result_text: str) -> str:
     """Feed tool output back into the LLM for a natural reply."""
     followup_prompt = f"""
 The user asked: {user_prompt}
@@ -133,9 +147,14 @@ If next steps are obvious (e.g., ask for missing fields), mention them briefly.
     print(f"🔄 Sending followup prompt to LLM:\n{followup_prompt}\n")  # DEBUG
     return _ollama_stream(followup_prompt)
 
+@app.post("/chat")
+async def run_client(request: Request):
+    body = await request.json()
+    user_prompt = body.get("prompt", "").strip()
+    print(f"user messege {user_prompt}")
 
-async def run_client():
-    print("Welcome to Hotel Assistant 🏨 with FastMCP SSE (type 'quit' to exit)")
+    if not user_prompt:
+        return JSONResponse({"action": "chat", "result": "⚠️ Empty message"})
     try:
         # Connect to FastMCP server
         client = Client(FASTMCP_SERVER_URL)
@@ -155,7 +174,7 @@ async def run_client():
                     break
 
                 # 1) Ask LLM for intent
-                intent = query_llm_for_intent(user_prompt, available_tools)
+                intent = await query_llm_for_intent(user_prompt, available_tools)
                 print(f"📦 Parsed intent: {intent}\n")   # DEBUG
 
                 tool_name = intent.get("tool_name", "chat")
@@ -164,22 +183,24 @@ async def run_client():
                 # 2) Normal chat if no tool
                 if tool_name == "chat" or not available_tools:
                     print("💬 Falling back to direct chat\n")   # DEBUG
-                    reply = chat_with_llm(user_prompt)
+                    reply = await chat_with_llm(user_prompt)
                     print(f"🤖 LLM: {reply}")
-                    continue
+                    return JSONResponse({"action": "chat", "result": reply})
+                    
 
                 # 3) Tool call path
                 tool_exists = any(tool.name.lower() == tool_name.lower() for tool in available_tools)
                 if not tool_exists:
                     print(f"⚠️ Tool '{tool_name}' not found. Available: {[t.name for t in available_tools]}\n")
-                    reply = chat_with_llm(user_prompt)
+                    reply = await chat_with_llm(user_prompt)
                     print(f"🤖 LLM (fallback): {reply}")
-                    continue
+                    return JSONResponse({"action": "chat", "result": reply})
+                    
 
                 print(f"🔧 Calling MCP tool: {tool_name} with args: {arguments}\n")
                 try:
                     result = await client.call_tool(tool_name, arguments)
-
+                    tool_result_text = await _stringify_tool_result(result)
                     # Show raw tool result
                     if hasattr(result, "text"):
                         print(f"📋 Raw MCP Result.text: {result.text}\n")
@@ -187,16 +208,17 @@ async def run_client():
                         print(f"📋 Raw MCP Result.content: {result.content}\n")
                     else:
                         print(f"📋 Raw MCP Result: {result}\n")
+                    
+                    reply = await llm_followup(user_prompt, tool_name, arguments, tool_result_text)
+                    return JSONResponse({"action": tool_name, "result": reply})
 
                     # Feed back into LLM for natural reply
-                    tool_result_text = _stringify_tool_result(result)
-                    reply = llm_followup(user_prompt, tool_name, arguments, tool_result_text)
-                    print(f"🤖 LLM: {reply}")
 
                 except Exception as e:
                     print(f"❌ Error calling MCP tool: {e}\n")
-                    reply = chat_with_llm(user_prompt)
+                    reply = await chat_with_llm(user_prompt)
                     print(f"🤖 LLM (fallback): {reply}")
+                    return JSONResponse({"action": "chat", "result": reply})
 
     except Exception as e:
         print(f"❌ Failed to connect to FastMCP server: {e}\n")
@@ -204,6 +226,10 @@ async def run_client():
         print("1. Make sure your server is running")
         print(f"2. Check that your server is accessible at: {FASTMCP_SERVER_URL}")
         print("3. Verify your server starts without errors")
+        return JSONResponse({
+            "action": "error",
+            "result": f"❌ Failed to connect to FastMCP server: {e}"
+        })
 
 
 if __name__ == "__main__":
